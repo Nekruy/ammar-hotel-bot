@@ -6,7 +6,6 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createTelegramBot, getTelegramBot } from "../bot/telegramHandler";
-import { createWhatsAppClient }              from "../bot/whatsappHandler";
 import { notifyStaff }                       from "../integrations/staffNotifier";
 import { logger }                            from "../utils/logger";
 import { getAllSessions, getHistoryByKey }   from "../utils/redis";
@@ -219,8 +218,9 @@ async function main() {
     logger.warn("⚠️  TELEGRAM_BOT_TOKEN not set");
   }
 
-  // WhatsApp (disabled by default)
+  // WhatsApp (disabled by default — requires Chromium, use ENABLE_WHATSAPP=true)
   if (process.env.ENABLE_WHATSAPP === "true") {
+    const { createWhatsAppClient } = await import("../bot/whatsappHandler");
     const wa = createWhatsAppClient();
     await wa.initialize();
     logger.info("📱 WhatsApp initializing...");

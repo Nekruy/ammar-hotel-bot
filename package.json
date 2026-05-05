@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "AI Бот-консьерж AMMAR Hotel — Grok (xAI)",
   "main": "dist/server/index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev":        "tsx watch src/server/index.ts",
-    "build":      "tsc",
+    "build":      "npx tsc",
     "start":      "node dist/server/index.js",
     "start:safe": "npx tsx src/server/index.ts || npm run start:safe"
   },
