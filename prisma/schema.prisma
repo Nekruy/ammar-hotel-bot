@@ -1,0 +1,53 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql"; url = env("DATABASE_URL") }
+
+model Guest {
+  id         String   @id @default(uuid())
+  telegramId String?  @unique
+  whatsappId String?  @unique
+  roomNumber String?
+  name       String?
+  language   String   @default("russian")
+  checkIn    DateTime?
+  checkOut   DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sessions   Session[]
+  orders     Order[]
+  tasks      Task[]
+}
+model Session {
+  id        String   @id @default(uuid())
+  guestId   String
+  platform  String
+  history   Json     @default("[]")
+  updatedAt DateTime @updatedAt @default(now())
+  guest     Guest    @relation(fields: [guestId], references: [id])
+}
+model Order {
+  id         String   @id @default(uuid())
+  guestId    String
+  roomNumber String
+  items      Json
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  guest      Guest    @relation(fields: [guestId], references: [id])
+}
+model Task {
+  id          String   @id @default(uuid())
+  guestId     String
+  roomNumber  String
+  taskType    String
+  description String?
+  priority    String   @default("NORMAL")
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  guest       Guest    @relation(fields: [guestId], references: [id])
+}
+model EventLog {
+  id         String   @id @default(uuid())
+  eventType  String
+  roomNumber String?
+  data       Json?
+  createdAt  DateTime @default(now())
+}

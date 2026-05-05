@@ -1,0 +1,36 @@
+{
+  "name": "ammar-hotel-bot",
+  "version": "1.0.0",
+  "description": "AI Бот-консьерж AMMAR Hotel — Grok (xAI)",
+  "main": "dist/server/index.js",
+  "scripts": {
+    "dev":        "tsx watch src/server/index.ts",
+    "build":      "tsc",
+    "start":      "node dist/server/index.js",
+    "start:safe": "npx tsx src/server/index.ts || npm run start:safe"
+  },
+  "dependencies": {
+    "openai":             "^4.67.0",
+    "grammy":             "^1.30.0",
+    "whatsapp-web.js":    "^1.23.0",
+    "qrcode-terminal":    "^0.12.0",
+    "express":            "^4.21.0",
+    "cors":               "^2.8.5",
+    "helmet":             "^8.0.0",
+    "express-rate-limit": "^7.4.0",
+    "ioredis":            "^5.4.1",
+    "dotenv":             "^16.4.5",
+    "axios":              "^1.7.7",
+    "winston":            "^3.15.0",
+    "zod":                "^3.23.8",
+    "uuid":               "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/cors":    "^2.8.17",
+    "@types/node":    "^22.7.4",
+    "@types/uuid":    "^10.0.0",
+    "tsx":            "^4.19.1",
+    "typescript":     "^5.6.2"
+  }
+}

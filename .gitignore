@@ -1,0 +1,24 @@
+# Environment — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# WhatsApp session data
+whatsapp-session/
+
+# Logs
+*.log
+logs/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
