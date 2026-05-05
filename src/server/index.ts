@@ -16,6 +16,13 @@ import { addSSEClient, removeSSEClient }     from "../utils/adminEvents";
 const ALLOWED_ORIGINS = [
   "https://ammar.tj",
   "https://www.ammar.tj",
+  // Railway deployment URL (set automatically by Railway, or override via env)
+  ...(process.env.RAILWAY_PUBLIC_DOMAIN
+    ? [`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`]
+    : []),
+  ...(process.env.ALLOWED_ORIGIN
+    ? [process.env.ALLOWED_ORIGIN]
+    : []),
 ];
 
 const app = express();
