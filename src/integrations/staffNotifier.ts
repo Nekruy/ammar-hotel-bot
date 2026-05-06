@@ -37,12 +37,21 @@ export async function notifyStaff(
   data: Record<string, any>
 ): Promise<void> {
   const token  = process.env.STAFF_BOT_TOKEN;
-  const chatId = resolveId(process.env[CHANNEL_ENV[channel]]);
+  const envKey = CHANNEL_ENV[channel];
+  const rawId  = process.env[envKey];
+  const chatId = resolveId(rawId);
 
-  if (!token || !chatId) {
-    logger.warn(
-      `📢 [STAFF/${channel.toUpperCase()}] chat ID не задан (${CHANNEL_ENV[channel]}). ` +
-      `Добавьте в .env реальный ID группы.`,
+  logger.info(`📢 notifyStaff → ${channel} | env=${envKey} | raw="${rawId}" | resolved=${chatId}`);
+
+  if (!token) {
+    logger.error("❌ STAFF_BOT_TOKEN не задан в .env!");
+    return;
+  }
+
+  if (!chatId) {
+    logger.error(
+      `❌ [STAFF/${channel.toUpperCase()}] chat ID не задан или невалиден. ` +
+      `${envKey}="${rawId}" — должно быть отрицательное целое число, напр. -1002345678901`,
       data,
     );
     return;
@@ -51,16 +60,23 @@ export async function notifyStaff(
   const text = formatMessage(channel, data);
 
   try {
-    await axios.post(`https://api.telegram.org/bot${token}/sendMessage`, {
-      chat_id:    chatId,
-      text,
-      parse_mode: "HTML",
-    }, { timeout: 8000 });
-    logger.info(`✅ Staff/${channel} notified`, { room: data.room, chatId });
+    const response = await axios.post(
+      `https://api.telegram.org/bot${token}/sendMessage`,
+      { chat_id: chatId, text, parse_mode: "HTML" },
+      { timeout: 8000 },
+    );
+    if (response.data?.ok) {
+      logger.info(`✅ Staff/${channel} notified`, { room: data.room, chatId });
+    } else {
+      logger.error(`❌ Telegram ответил ok=false для ${channel}:`, response.data);
+    }
   } catch (err: any) {
     const status = err.response?.status;
     const desc   = err.response?.data?.description ?? err.message;
-    logger.error(`❌ Staff/${channel} send failed [${status}]: ${desc}`);
+    logger.error(`❌ Staff/${channel} send failed [${status}]: ${desc}`, {
+      chatId,
+      telegramResponse: err.response?.data,
+    });
   }
 }
 

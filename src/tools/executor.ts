@@ -219,24 +219,39 @@ async function toolUpsell(room: string, input: any, _g: GuestCtx) {
 async function toolMenu(mealTime = "all") {
   const menus: Record<string, any[]> = {
     breakfast: [
-      { name: "Яичница с овощами", price: "$6" }, { name: "Круассан + джем", price: "$4" },
-      { name: "Каша овсяная",      price: "$3" }, { name: "Фруктовая тарелка", price: "$5" },
+      { name: "Яичница с овощами", price: "20 сом" },
+      { name: "Каша овсяная",      price: "15 сом" },
+      { name: "Круассан с маслом", price: "18 сом" },
+      { name: "Фруктовая тарелка", price: "25 сом" },
     ],
     lunch: [
-      { name: "Плов таджикский",  price: "$8"  }, { name: "Лагман",          price: "$7"  },
-      { name: "Шашлык (3 шп.)",   price: "$12" }, { name: "Бизнес-ланч сет", price: "$10" },
+      { name: "Плов таджикский",  price: "45 сом" },
+      { name: "Лагман",           price: "40 сом" },
+      { name: "Шашлык (3 шп.)",   price: "55 сом" },
+      { name: "Салат свежий",     price: "25 сом" },
+      { name: "Сэндвич с курицей",price: "35 сом" },
     ],
     dinner: [
-      { name: "Форель гриль",   price: "$18" }, { name: "Стейк рибай",   price: "$25" },
-      { name: "Курица тандыр",  price: "$15" }, { name: "Вегетарианское", price: "$12" },
+      { name: "Плов таджикский",  price: "45 сом" },
+      { name: "Лагман",           price: "40 сом" },
+      { name: "Шашлык (3 шп.)",   price: "55 сом" },
+      { name: "Салат свежий",     price: "25 сом" },
+      { name: "Сэндвич с курицей",price: "35 сом" },
     ],
     drinks: [
-      { name: "Чай зел./чёрн.", price: "$2" }, { name: "Сок свежий",     price: "$4" },
-      { name: "Кофе эспрессо",  price: "$3" }, { name: "Вода минер.",    price: "$2" },
+      { name: "Чай зел./чёрн.",   price: "10 сом" },
+      { name: "Кофе эспрессо",    price: "15 сом" },
+      { name: "Сок свежий",       price: "20 сом" },
+      { name: "Вода минеральная", price: "8 сом"  },
     ],
   };
-  if (mealTime === "all") return { menu: menus, hours: "07:00–23:00", location: "1 этаж" };
-  return { meal: mealTime, items: menus[mealTime] ?? [], hours: mealTime === "breakfast" ? "07:00–10:30" : "11:00–23:00" };
+  if (mealTime === "all") return { menu: menus, hours: "07:00–23:00", location: "1 этаж", currency: "сом (сомони)" };
+  return {
+    meal:     mealTime,
+    items:    menus[mealTime] ?? [],
+    hours:    mealTime === "breakfast" ? "07:00–10:30" : "11:00–23:00",
+    currency: "сом (сомони)",
+  };
 }
 
 // ════════ 10. ПОБУДКА ════════════════════════════════════════════
