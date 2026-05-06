@@ -3,701 +3,766 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AMMAR Hotel — Admin Panel</title>
+<title>AMMAR Hotel — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --dark:    #0D1828;
-    --dark2:   #111f35;
-    --dark3:   #162640;
-    --panel:   #1A2535;
-    --gold:    #C4A060;
-    --gold2:   #d4b070;
-    --text:    #e8e0d0;
-    --muted:   #8a9ab0;
-    --online:  #4caf7d;
-    --danger:  #e05555;
-    --border:  rgba(196,160,96,0.18);
-    --sidebar: 300px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--dark);
-    color: var(--text);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
+:root {
+  --bg:     #0D1828;
+  --bg2:    #111f35;
+  --bg3:    #162640;
+  --card:   #1A2535;
+  --gold:   #C4A060;
+  --gold2:  #d4b070;
+  --text:   #e8e0d0;
+  --muted:  #8a9ab0;
+  --green:  #4caf7d;
+  --red:    #e05555;
+  --yellow: #f0b429;
+  --border: rgba(196,160,96,.18);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-  /* ── LOGIN SCREEN ──────────────────────────────────────────── */
-  #loginScreen {
-    position: fixed; inset: 0;
-    background: var(--dark);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 1000;
-  }
-  .login-box {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 40px;
-    width: 340px;
-    text-align: center;
-  }
-  .login-logo {
-    font-size: 2.2rem; font-weight: 700;
-    color: var(--gold); letter-spacing: 2px;
-    margin-bottom: 4px;
-  }
-  .login-sub { color: var(--muted); font-size: .85rem; margin-bottom: 28px; }
-  .login-box input {
-    width: 100%; padding: 12px 16px;
-    background: var(--dark3); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-size: 1rem;
-    margin-bottom: 14px; outline: none;
-    transition: border-color .2s;
-  }
-  .login-box input:focus { border-color: var(--gold); }
-  .login-box button {
-    width: 100%; padding: 13px;
-    background: var(--gold); color: var(--dark); font-weight: 700;
-    font-size: 1rem; border: none; border-radius: 8px;
-    cursor: pointer; transition: background .2s;
-  }
-  .login-box button:hover { background: var(--gold2); }
-  .login-error { color: var(--danger); font-size: .85rem; margin-top: 10px; display: none; }
+/* ═══ LOGIN ═══════════════════════════════════════════════════════ */
+#login-screen {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+}
+.login-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 44px 40px;
+  width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+.login-logo {
+  font-size: 2.4rem; font-weight: 700;
+  color: var(--gold); letter-spacing: 3px;
+  margin-bottom: 4px;
+}
+.login-sub {
+  color: var(--muted); font-size: .82rem;
+  margin-bottom: 32px;
+}
+.login-wrap input[type=password] {
+  width: 100%; padding: 13px 16px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: 1rem;
+  font-family: inherit; margin-bottom: 12px; outline: none;
+  transition: border-color .2s;
+}
+.login-wrap input:focus { border-color: var(--gold); }
+.login-wrap button {
+  width: 100%; padding: 14px;
+  background: var(--gold); color: var(--bg);
+  font-weight: 700; font-size: 1rem; font-family: inherit;
+  border: none; border-radius: 10px; cursor: pointer;
+  transition: background .2s;
+}
+.login-wrap button:hover { background: var(--gold2); }
+.login-err {
+  color: var(--red); font-size: .83rem;
+  margin-top: 12px; display: none;
+}
 
-  /* ── MAIN LAYOUT ───────────────────────────────────────────── */
-  #app { display: flex; flex-direction: column; height: 100vh; }
+/* ═══ ADMIN PANEL ═════════════════════════════════════════════════ */
+#admin-panel {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+}
 
-  header {
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    padding: 0 20px;
-    height: 58px;
-    display: flex; align-items: center; gap: 16px;
-    flex-shrink: 0;
-  }
-  .h-logo { font-size: 1.3rem; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
-  .h-sub  { color: var(--muted); font-size: .8rem; margin-left: 4px; }
-  .h-spacer { flex: 1; }
-  .h-conn {
-    display: flex; align-items: center; gap: 6px;
-    font-size: .8rem; color: var(--muted);
-  }
-  .h-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--muted); transition: background .3s;
-  }
-  .h-dot.live { background: var(--online); }
-  .h-logout {
-    background: none; border: 1px solid var(--border);
-    color: var(--muted); padding: 5px 12px; border-radius: 6px;
-    font-size: .8rem; cursor: pointer; transition: all .2s;
-  }
-  .h-logout:hover { border-color: var(--gold); color: var(--gold); }
+/* Header */
+.header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  height: 56px; padding: 0 20px;
+  display: flex; align-items: center; gap: 14px;
+  flex-shrink: 0;
+}
+.h-logo { font-size: 1.25rem; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
+.h-sep  { color: var(--border); }
+.h-title { font-size: .82rem; color: var(--muted); }
+.h-space { flex: 1; }
+.h-status {
+  display: flex; align-items: center; gap: 7px;
+  font-size: .78rem; color: var(--muted);
+}
+.h-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--yellow);
+  transition: background .4s;
+}
+.h-dot.online  { background: var(--green); }
+.h-dot.offline { background: var(--red); }
+.h-logout {
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); padding: 5px 13px; border-radius: 7px;
+  font-size: .78rem; font-family: inherit; cursor: pointer;
+  transition: all .2s;
+}
+.h-logout:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* ── STATS ROW ─────────────────────────────────────────────── */
-  .stats-row {
-    display: flex; gap: 12px;
-    padding: 12px 16px;
-    background: var(--dark2);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-  .stat-card {
-    flex: 1; background: var(--panel);
-    border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 14px;
-  }
-  .stat-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
-  .stat-value { font-size: 1.5rem; font-weight: 700; color: var(--gold); line-height: 1.2; }
-  .stat-sub   { font-size: .72rem; color: var(--muted); }
+/* Stats row */
+.stats {
+  display: flex; gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.stat {
+  flex: 1; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 14px;
+}
+.stat-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+.stat-val   { font-size: 1.6rem; font-weight: 700; color: var(--gold); line-height: 1.15; }
+.stat-sub   { font-size: .7rem; color: var(--muted); }
 
-  /* ── BODY SPLIT ────────────────────────────────────────────── */
-  .body-split {
-    display: flex; flex: 1; overflow: hidden;
-  }
+/* Body split */
+.split {
+  flex: 1; display: flex; overflow: hidden;
+}
 
-  /* ── SIDEBAR ───────────────────────────────────────────────── */
-  aside {
-    width: var(--sidebar); min-width: var(--sidebar);
-    background: var(--dark2);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    overflow: hidden;
-  }
-  .sidebar-head {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 8px;
-  }
-  .sidebar-title { font-weight: 600; font-size: .9rem; flex: 1; }
-  .guest-count {
-    background: var(--gold); color: var(--dark);
-    font-size: .72rem; font-weight: 700;
-    padding: 2px 7px; border-radius: 10px;
-  }
-  .sidebar-list { overflow-y: auto; flex: 1; }
-  .sidebar-list::-webkit-scrollbar { width: 4px; }
-  .sidebar-list::-webkit-scrollbar-track { background: transparent; }
-  .sidebar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* ═══ SIDEBAR ═════════════════════════════════════════════════════ */
+.sidebar {
+  width: 300px; min-width: 300px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.sb-head {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.sb-search {
+  width: 100%; padding: 8px 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: .84rem;
+  font-family: inherit; outline: none;
+}
+.sb-search:focus { border-color: var(--gold); }
+.sb-count {
+  font-size: .72rem; color: var(--muted);
+  margin-top: 6px; padding: 0 2px;
+}
+.sb-list {
+  flex: 1; overflow-y: auto;
+}
+.sb-list::-webkit-scrollbar { width: 4px; }
+.sb-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .guest-item {
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba(255,255,255,.04);
-    cursor: pointer;
-    transition: background .15s;
-    position: relative;
-  }
-  .guest-item:hover { background: rgba(196,160,96,.06); }
-  .guest-item.active { background: rgba(196,160,96,.12); border-left: 2px solid var(--gold); }
-  .gi-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-  .gi-room {
-    font-weight: 700; font-size: .9rem; color: var(--gold);
-  }
-  .gi-platform {
-    font-size: .68rem; color: var(--muted);
-    background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px;
-  }
-  .gi-online {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--muted); margin-left: auto;
-  }
-  .gi-online.on { background: var(--online); }
-  .gi-msg {
-    font-size: .78rem; color: var(--muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    max-width: 240px;
-  }
-  .gi-time { font-size: .68rem; color: var(--muted); margin-top: 2px; }
-  .gi-badge {
-    position: absolute; top: 8px; right: 12px;
-    background: var(--danger); color: #fff;
-    font-size: .65rem; font-weight: 700;
-    width: 16px; height: 16px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .sidebar-empty {
-    padding: 30px 14px; text-align: center;
-    color: var(--muted); font-size: .85rem;
-  }
+.guest-row {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  cursor: pointer;
+  transition: background .15s;
+}
+.guest-row:hover { background: rgba(196,160,96,.06); }
+.guest-row.active {
+  background: rgba(196,160,96,.1);
+  border-left: 3px solid var(--gold);
+}
+.gr-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.gr-room { font-weight: 700; font-size: .88rem; color: var(--gold); }
+.gr-tag {
+  font-size: .65rem; color: var(--muted);
+  background: rgba(255,255,255,.07);
+  padding: 1px 5px; border-radius: 4px;
+}
+.gr-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted); margin-left: auto;
+}
+.gr-dot.on { background: var(--green); }
+.gr-msg {
+  font-size: .76rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.gr-time { font-size: .65rem; color: var(--muted); margin-top: 2px; }
+.sb-empty {
+  padding: 36px 14px; text-align: center;
+  color: var(--muted); font-size: .84rem; line-height: 1.8;
+}
+.sb-empty-icon { font-size: 2rem; opacity: .3; margin-bottom: 8px; }
 
-  /* ── MAIN CHAT AREA ────────────────────────────────────────── */
-  main {
-    flex: 1; display: flex; flex-direction: column; overflow: hidden;
-  }
-  .main-empty {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    color: var(--muted); gap: 10px;
-  }
-  .main-empty-icon { font-size: 3rem; opacity: .3; }
-  .main-empty-text { font-size: .9rem; }
+/* ═══ CHAT AREA ═══════════════════════════════════════════════════ */
+.chat-area {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--muted); gap: 10px;
+}
+.chat-empty-icon { font-size: 3.5rem; opacity: .2; }
+.chat-empty-txt  { font-size: .88rem; }
 
-  .chat-header {
-    padding: 12px 18px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-    flex-shrink: 0;
-  }
-  .ch-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: var(--dark3); border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; flex-shrink: 0;
-  }
-  .ch-room { font-weight: 700; font-size: 1rem; }
-  .ch-info { font-size: .78rem; color: var(--muted); }
-  .ch-spacer { flex: 1; }
-  .ch-badge {
-    font-size: .72rem; padding: 3px 8px; border-radius: 6px;
-    font-weight: 600;
-  }
-  .ch-badge.tg { background: rgba(34,139,230,.2); color: #60a8e8; }
-  .ch-badge.web { background: rgba(196,160,96,.15); color: var(--gold); }
-  .ch-badge.wa { background: rgba(76,175,61,.15); color: #5cb85c; }
+.chat-hd {
+  padding: 11px 18px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.chat-hd-av {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.chat-hd-room { font-weight: 700; font-size: .98rem; }
+.chat-hd-info { font-size: .74rem; color: var(--muted); }
+.chat-hd-sp   { flex: 1; }
+.platform-badge {
+  font-size: .68rem; font-weight: 600;
+  padding: 3px 9px; border-radius: 6px;
+}
+.platform-badge.tg  { background: rgba(34,139,230,.18); color: #6ab8f0; }
+.platform-badge.web { background: rgba(196,160,96,.15); color: var(--gold); }
+.platform-badge.wa  { background: rgba(76,175,61,.15);  color: #5cb85c; }
 
-  .messages-area {
-    flex: 1; overflow-y: auto;
-    padding: 16px 18px;
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  .messages-area::-webkit-scrollbar { width: 4px; }
-  .messages-area::-webkit-scrollbar-track { background: transparent; }
-  .messages-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.messages {
+  flex: 1; overflow-y: auto;
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .msg { display: flex; flex-direction: column; max-width: 72%; }
-  .msg.user { align-self: flex-end; align-items: flex-end; }
-  .msg.assistant { align-self: flex-start; align-items: flex-start; }
-  .msg.system { align-self: center; align-items: center; max-width: 90%; }
+.msg { display: flex; flex-direction: column; max-width: 74%; }
+.msg.user      { align-self: flex-end;   align-items: flex-end; }
+.msg.assistant { align-self: flex-start; align-items: flex-start; }
+.msg.system    { align-self: center;     align-items: center; max-width: 90%; }
+.msg-who { font-size: .68rem; color: var(--muted); margin-bottom: 3px; padding: 0 4px; }
+.msg-bubble {
+  padding: 9px 13px; border-radius: 14px;
+  font-size: .86rem; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word;
+}
+.msg.user .msg-bubble {
+  background: var(--gold); color: var(--bg);
+  border-bottom-right-radius: 4px;
+}
+.msg.assistant .msg-bubble {
+  background: var(--card); border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+}
+.msg.system .msg-bubble {
+  background: rgba(196,160,96,.07);
+  border: 1px dashed var(--border);
+  color: var(--muted); font-size: .76rem;
+  border-radius: 8px; text-align: center;
+}
+.msg-ts { font-size: .62rem; color: var(--muted); margin-top: 3px; padding: 0 4px; }
 
-  .msg-sender { font-size: .7rem; color: var(--muted); margin-bottom: 3px; padding: 0 4px; }
-  .msg-bubble {
-    padding: 9px 13px; border-radius: 14px;
-    font-size: .88rem; line-height: 1.5;
-    white-space: pre-wrap; word-break: break-word;
-  }
-  .msg.user .msg-bubble {
-    background: var(--gold); color: var(--dark);
-    border-bottom-right-radius: 4px;
-  }
-  .msg.assistant .msg-bubble {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-bottom-left-radius: 4px;
-  }
-  .msg.system .msg-bubble {
-    background: rgba(196,160,96,.08);
-    border: 1px dashed var(--border);
-    color: var(--muted); font-size: .78rem;
-    border-radius: 8px; text-align: center;
-  }
-  .msg-time { font-size: .65rem; color: var(--muted); margin-top: 3px; padding: 0 4px; }
+/* Send bar */
+.send-bar {
+  padding: 10px 14px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: flex-end;
+  flex-shrink: 0;
+}
+.send-bar textarea {
+  flex: 1; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-size: .88rem;
+  padding: 9px 13px; outline: none; resize: none;
+  max-height: 90px; font-family: inherit; line-height: 1.4;
+  transition: border-color .2s;
+}
+.send-bar textarea:focus { border-color: var(--gold); }
+.send-btn {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--gold); border: none;
+  color: var(--bg); font-size: 1rem;
+  cursor: pointer; transition: background .2s; flex-shrink: 0;
+}
+.send-btn:hover    { background: var(--gold2); }
+.send-btn:disabled { background: var(--muted); cursor: default; }
+.send-note {
+  padding: 8px 14px;
+  font-size: .74rem; color: var(--muted);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
 
-  /* ── SEND BAR ──────────────────────────────────────────────── */
-  .send-bar {
-    padding: 12px 16px;
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    display: flex; gap: 10px; align-items: flex-end;
-    flex-shrink: 0;
-  }
-  .send-bar textarea {
-    flex: 1; background: var(--dark3);
-    border: 1px solid var(--border); border-radius: 10px;
-    color: var(--text); font-size: .9rem;
-    padding: 10px 14px; outline: none; resize: none;
-    max-height: 100px; font-family: inherit;
-    transition: border-color .2s;
-  }
-  .send-bar textarea:focus { border-color: var(--gold); }
-  .send-bar button {
-    width: 42px; height: 42px; border-radius: 10px;
-    background: var(--gold); border: none;
-    color: var(--dark); font-size: 1.1rem;
-    cursor: pointer; transition: background .2s;
-    flex-shrink: 0;
-  }
-  .send-bar button:hover { background: var(--gold2); }
-  .send-bar button:disabled { background: var(--muted); cursor: default; }
+/* Toast */
+#toast {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--card); border: 1px solid var(--gold);
+  color: var(--text); padding: 11px 16px; border-radius: 10px;
+  font-size: .83rem; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  transform: translateY(16px); opacity: 0;
+  transition: all .28s; pointer-events: none; z-index: 600;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
 
-  /* ── EVENTS LOG ────────────────────────────────────────────── */
-  .events-badge {
-    background: var(--danger); color: #fff;
-    font-size: .65rem; font-weight: 700;
-    padding: 1px 5px; border-radius: 6px;
-    margin-left: 4px; display: none;
-  }
-
-  /* ── TOAST ─────────────────────────────────────────────────── */
-  #toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--panel); border: 1px solid var(--gold);
-    color: var(--text); padding: 12px 18px; border-radius: 10px;
-    font-size: .85rem; box-shadow: 0 4px 20px rgba(0,0,0,.4);
-    transform: translateY(20px); opacity: 0;
-    transition: all .3s; pointer-events: none; z-index: 500;
-    max-width: 300px;
-  }
-  #toast.show { transform: translateY(0); opacity: 1; }
-
-  /* ── SCROLLBAR ─────────────────────────────────────────────── */
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(196,160,96,.2); border-radius: 3px; }
+/* Scrollbar global */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(196,160,96,.2); border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<!-- ── LOGIN ──────────────────────────────────────────────────── -->
-<div id="loginScreen">
-  <div class="login-box">
+<!-- ══════════ LOGIN SCREEN ══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-wrap">
     <div class="login-logo">AMMAR</div>
-    <div class="login-sub">Grand Hotel · Admin Panel</div>
-    <input type="password" id="loginInput" placeholder="Введите пароль" autocomplete="current-password">
+    <div class="login-sub">Grand Hotel · Панель управления</div>
+    <input type="password" id="password" placeholder="Введите пароль" autocomplete="current-password">
     <button onclick="doLogin()">Войти</button>
-    <div class="login-error" id="loginError">Неверный пароль</div>
+    <div class="login-err" id="login-err">Неверный пароль</div>
   </div>
 </div>
 
-<!-- ── MAIN APP ────────────────────────────────────────────────── -->
-<div id="app" style="display:none">
+<!-- ══════════ ADMIN PANEL ═══════════════════════════════════════ -->
+<div id="admin-panel">
 
-  <header>
+  <!-- Header -->
+  <div class="header">
     <span class="h-logo">AMMAR</span>
-    <span class="h-sub">Admin Panel</span>
-    <div class="h-spacer"></div>
-    <div class="h-conn">
-      <div class="h-dot" id="connDot"></div>
-      <span id="connLabel">Подключение…</span>
+    <span class="h-sep">|</span>
+    <span class="h-title">Admin Panel</span>
+    <div class="h-space"></div>
+    <div class="h-status">
+      <div class="h-dot" id="conn-dot"></div>
+      <span id="conn-label">Подключение…</span>
     </div>
-    <button class="h-logout" onclick="logout()">Выйти</button>
-  </header>
+    <button class="h-logout" onclick="doLogout()">Выйти</button>
+  </div>
 
   <!-- Stats -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-label">Гостей онлайн</div>
-      <div class="stat-value" id="sOnline">—</div>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">👥 Гостей онлайн</div>
+      <div class="stat-val" id="s-online">—</div>
       <div class="stat-sub">сейчас активны</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Сообщений сегодня</div>
-      <div class="stat-value" id="sMsgs">—</div>
-      <div class="stat-sub">всего диалогов</div>
+    <div class="stat">
+      <div class="stat-label">💬 Сообщений</div>
+      <div class="stat-val" id="s-msgs">—</div>
+      <div class="stat-sub">сегодня</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Room Service</div>
-      <div class="stat-value" id="sRS">—</div>
-      <div class="stat-sub">заказов</div>
+    <div class="stat">
+      <div class="stat-label">🍽 Заказов</div>
+      <div class="stat-val" id="s-orders">—</div>
+      <div class="stat-sub">room service</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Эскалации</div>
-      <div class="stat-value" id="sEsc">—</div>
+    <div class="stat">
+      <div class="stat-label">🚨 Эскалаций</div>
+      <div class="stat-val" id="s-esc">—</div>
       <div class="stat-sub">к персоналу</div>
     </div>
   </div>
 
-  <div class="body-split">
+  <!-- Split -->
+  <div class="split">
 
     <!-- Sidebar -->
-    <aside>
-      <div class="sidebar-head">
-        <span class="sidebar-title">Гости</span>
-        <span class="guest-count" id="guestCount">0</span>
+    <div class="sidebar">
+      <div class="sb-head">
+        <input class="sb-search" type="text" placeholder="🔍 Поиск гостя..." oninput="filterGuests(this.value)">
+        <div class="sb-count" id="sb-count">Загрузка…</div>
       </div>
-      <div class="sidebar-list" id="guestList">
-        <div class="sidebar-empty">Нет активных гостей</div>
+      <div class="sb-list" id="guest-list">
+        <div class="sb-empty">
+          <div class="sb-empty-icon">🏨</div>
+          Нет активных гостей
+        </div>
       </div>
-    </aside>
+    </div>
 
-    <!-- Main -->
-    <main id="mainArea">
-      <div class="main-empty" id="emptyState">
-        <div class="main-empty-icon">🏨</div>
-        <div class="main-empty-text">Выберите гостя из списка</div>
+    <!-- Chat area -->
+    <div class="chat-area" id="chat-area">
+      <div class="chat-empty" id="chat-empty">
+        <div class="chat-empty-icon">💬</div>
+        <div class="chat-empty-txt">Выберите гостя из списка</div>
       </div>
-    </main>
+    </div>
 
   </div>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
 <script>
-// ── AUTH ───────────────────────────────────────────────────────
-const ADMIN_PASS = "ammar2026";
-let AUTH_TOKEN   = ADMIN_PASS; // always use fixed password for API calls
-let appStarted   = false;
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+const PASS = "ammar2026";
 
 function doLogin() {
-  const pw = document.getElementById("loginInput").value.trim();
-  const errEl = document.getElementById("loginError");
-  if (!pw) return;
-
-  if (pw !== ADMIN_PASS) {
-    errEl.style.display = "block";
-    return;
+  const val = document.getElementById("password").value;
+  const err = document.getElementById("login-err");
+  if (val === PASS) {
+    err.style.display = "none";
+    localStorage.setItem("admin_logged_in", "true");
+    showPanel();
+  } else {
+    err.style.display = "block";
+    document.getElementById("password").value = "";
   }
-
-  errEl.style.display = "none";
-  sessionStorage.setItem("admin_auth", "true");
-  showApp();
 }
 
-function logout() {
-  sessionStorage.removeItem("admin_auth");
-  if (evtSource) evtSource.close();
-  document.getElementById("loginScreen").style.display = "flex";
-  document.getElementById("app").style.display = "none";
-  document.getElementById("loginInput").value = "";
-  appStarted = false;
+function doLogout() {
+  localStorage.removeItem("admin_logged_in");
+  if (sse) { sse.close(); sse = null; }
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("admin-panel").style.display  = "none";
+  document.getElementById("password").value = "";
+  activeKey = null;
+  allGuests = [];
 }
 
-function showApp() {
-  if (appStarted) return;
-  appStarted = true;
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("app").style.display = "flex";
-  loadGuests();
-  refreshStats();
+function checkLogin() {
+  if (localStorage.getItem("admin_logged_in") === "true") showPanel();
+}
+
+function showPanel() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("admin-panel").style.display  = "flex";
+  loadData();
   startSSE();
-  setInterval(refreshStats, 15_000);
-  setInterval(loadGuests, 20_000);
+  setInterval(loadData, 5000);
 }
 
-// Auto-login if already authenticated this session
-if (sessionStorage.getItem("admin_auth") === "true") {
-  showApp();
-}
-
-// Enter key on login
-document.getElementById("loginInput").addEventListener("keydown", e => {
+document.getElementById("password").addEventListener("keydown", e => {
   if (e.key === "Enter") doLogin();
 });
 
-// ── API HELPERS ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// API HELPER — всегда с Bearer токеном
+// ═══════════════════════════════════════════════════════
 async function api(path, opts = {}) {
-  const r = await fetch(path, {
+  const res = await fetch(path, {
     ...opts,
-    headers: { "Authorization": `Bearer ${AUTH_TOKEN}`, "Content-Type": "application/json", ...(opts.headers||{}) },
+    headers: {
+      "Authorization": "Bearer " + PASS,
+      "Content-Type": "application/json",
+      ...(opts.headers || {}),
+    },
   });
-  if (r.status === 401) throw new Error("401");
-  return r.json();
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  return res.json();
 }
 
-// ── STATS ──────────────────────────────────────────────────────
-async function refreshStats() {
+// ═══════════════════════════════════════════════════════
+// LOAD DATA (stats + guests)
+// ═══════════════════════════════════════════════════════
+let allGuests = [];
+let activeKey = null;
+let filterText = "";
+
+async function loadData() {
+  await Promise.all([loadStats(), loadGuests()]);
+}
+
+async function loadStats() {
   try {
     const s = await api("/api/admin/stats");
-    document.getElementById("sMsgs").textContent = s.totalMessages ?? 0;
-    document.getElementById("sRS").textContent   = s.roomServiceOrders ?? 0;
-    document.getElementById("sEsc").textContent  = s.escalations ?? 0;
-  } catch {}
+    document.getElementById("s-msgs").textContent   = s.totalMessages     ?? 0;
+    document.getElementById("s-orders").textContent = s.roomServiceOrders ?? 0;
+    document.getElementById("s-esc").textContent    = s.escalations       ?? 0;
+    setOnline(true);
+  } catch (e) {
+    setOnline(false);
+  }
 }
-
-// ── GUEST LIST ─────────────────────────────────────────────────
-let guests = [];
-let activeKey = null;
-let unreadKeys = new Set();
 
 async function loadGuests() {
-  const data = await api("/api/admin/guests");
-  guests = data;
-  renderGuestList();
-
-  // Update online count
-  const online = guests.filter(g => g.isOnline).length;
-  document.getElementById("sOnline").textContent = online;
-  document.getElementById("guestCount").textContent = guests.length;
+  try {
+    const data = await api("/api/admin/guests");
+    allGuests = Array.isArray(data) ? data : [];
+    renderGuestList(filterText);
+    // Update online count
+    const online = allGuests.filter(g => g.isOnline).length;
+    document.getElementById("s-online").textContent = online;
+  } catch (e) {
+    // keep old list, just mark offline
+  }
 }
 
-function renderGuestList() {
-  const el = document.getElementById("guestList");
-  if (!guests.length) {
-    el.innerHTML = '<div class="sidebar-empty">Нет активных гостей</div>';
-    return;
+function filterGuests(q) {
+  filterText = q.toLowerCase();
+  renderGuestList(filterText);
+}
+
+function renderGuestList(q = "") {
+  const list = document.getElementById("guest-list");
+  const count = document.getElementById("sb-count");
+
+  let items = allGuests;
+  if (q) {
+    items = allGuests.filter(g => {
+      const room = (g.session?.roomNumber || "").toLowerCase();
+      const msg  = (g.lastMessage || "").toLowerCase();
+      const plat = (g.session?.platform || "").toLowerCase();
+      return room.includes(q) || msg.includes(q) || plat.includes(q);
+    });
   }
-  // Sort: online first, then by lastTime
-  const sorted = [...guests].sort((a, b) => {
+
+  // Sort: online first, then by lastTime desc
+  items = [...items].sort((a, b) => {
     if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
     return (b.lastTime || "") > (a.lastTime || "") ? 1 : -1;
   });
-  el.innerHTML = sorted.map(g => {
-    const platform = g.session.platform || "telegram";
-    const platformLabel = platform === "telegram" ? "TG" : platform === "whatsapp" ? "WA" : "WEB";
-    const timeStr = g.lastTime ? fmtTime(g.lastTime) : "";
-    const hasUnread = unreadKeys.has(g.key);
-    return `
-      <div class="guest-item${activeKey === g.key ? " active" : ""}" onclick="selectGuest('${g.key}')">
-        <div class="gi-top">
-          <span class="gi-room">№${g.session.roomNumber || "?"}</span>
-          <span class="gi-platform">${platformLabel}</span>
-          ${g.session.language ? `<span class="gi-platform">${g.session.language.slice(0,2).toUpperCase()}</span>` : ""}
-          <span class="gi-online${g.isOnline ? " on" : ""}"></span>
-        </div>
-        <div class="gi-msg">${escHtml(g.lastMessage || "—")}</div>
-        <div class="gi-time">${timeStr}</div>
-        ${hasUnread ? '<div class="gi-badge">!</div>' : ""}
+
+  count.textContent = items.length + " " + plural(items.length, "гость", "гостя", "гостей");
+
+  if (!items.length) {
+    list.innerHTML = `<div class="sb-empty">
+      <div class="sb-empty-icon">🏨</div>
+      ${q ? "Ничего не найдено" : "Нет активных гостей.<br>Напишите боту в Telegram."}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(g => {
+    const platform  = g.session?.platform || "telegram";
+    const platLabel = { telegram:"TG", web:"WEB", whatsapp:"WA" }[platform] || "?";
+    const platClass = { telegram:"tg", web:"web", whatsapp:"wa" }[platform] || "tg";
+    const room      = g.session?.roomNumber || "?";
+    const lang      = (g.session?.language || "ru").slice(0, 2).toUpperCase();
+    const isActive  = activeKey === g.key;
+    return `<div class="guest-row${isActive ? " active" : ""}" onclick="selectGuest('${esc(g.key)}')">
+      <div class="gr-top">
+        <span class="gr-room">Ком. ${room}</span>
+        <span class="gr-tag platform-badge ${platClass}">${platLabel}</span>
+        <span class="gr-tag">${lang}</span>
+        <span class="gr-dot${g.isOnline ? " on" : ""}"></span>
       </div>
-    `;
+      <div class="gr-msg">${esc(g.lastMessage || "—")}</div>
+      <div class="gr-time">${fmtTime(g.lastTime)}</div>
+    </div>`;
   }).join("");
 }
 
-// ── SELECT GUEST ───────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// SELECT GUEST & LOAD HISTORY
+// ═══════════════════════════════════════════════════════
 async function selectGuest(key) {
   activeKey = key;
-  unreadKeys.delete(key);
-  renderGuestList();
+  renderGuestList(filterText); // update active highlight
 
-  const guest = guests.find(g => g.key === key);
-  const history = await api(`/api/admin/history/${encodeURIComponent(key)}`);
+  const g = allGuests.find(x => x.key === key);
+  const platform = g?.session?.platform || "telegram";
+  const platLabel = { telegram:"TG", web:"WEB", whatsapp:"WA" }[platform] || "?";
+  const platClass = { telegram:"tg", web:"web", whatsapp:"wa" }[platform] || "tg";
+  const room      = g?.session?.roomNumber || "?";
+  const name      = g?.session?.guestName  || "Гость";
+  const lang      = g?.session?.language   || "ru";
+  const msgs      = g?.msgCount || 0;
+  const canSend   = platform === "telegram";
 
-  const platform = guest?.session?.platform || "telegram";
-  const platformLabel = { telegram:"TG", whatsapp:"WA", web:"WEB" }[platform] || platform.toUpperCase();
-  const platformClass = { telegram:"tg", whatsapp:"wa", web:"web" }[platform] || "tg";
-  const canSend = platform === "telegram";
-
-  const main = document.getElementById("mainArea");
-  main.innerHTML = `
-    <div class="chat-header">
-      <div class="ch-avatar">🛎</div>
+  const area = document.getElementById("chat-area");
+  area.innerHTML = `
+    <div class="chat-hd">
+      <div class="chat-hd-av">🛎</div>
       <div>
-        <div class="ch-room">Номер ${guest?.session?.roomNumber || "?"}</div>
-        <div class="ch-info">${guest?.session?.guestName || "Гость"} · ${guest?.session?.language || "ru"} · ${guest?.msgCount || 0} сообщений</div>
+        <div class="chat-hd-room">Комната ${room}</div>
+        <div class="chat-hd-info">${esc(name)} · ${lang} · ${msgs} сообщений</div>
       </div>
-      <div class="ch-spacer"></div>
-      <span class="ch-badge ${platformClass}">${platformLabel}</span>
+      <div class="chat-hd-sp"></div>
+      <span class="platform-badge ${platClass}">${platLabel}</span>
     </div>
-    <div class="messages-area" id="msgArea">
-      ${history.map(renderMsg).join("")}
-    </div>
-    ${canSend ? `
-    <div class="send-bar">
-      <textarea id="sendInput" rows="1" placeholder="Написать гостю…" onkeydown="handleSendKey(event)"></textarea>
-      <button onclick="sendToGuest()" id="sendBtn">➤</button>
-    </div>` : `
-    <div style="padding:10px 16px;font-size:.78rem;color:var(--muted);border-top:1px solid var(--border)">
-      Отправка доступна только для Telegram-гостей
-    </div>`}
+    <div class="messages" id="msg-area"><div style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px">Загрузка…</div></div>
+    ${canSend
+      ? `<div class="send-bar">
+           <textarea id="send-input" rows="1" placeholder="Написать гостю от менеджера…" onkeydown="sendKey(event)"></textarea>
+           <button class="send-btn" onclick="sendMsg()" id="send-btn">➤</button>
+         </div>`
+      : `<div class="send-note">Отправка только для Telegram-гостей</div>`
+    }
   `;
-  scrollMsgs();
-}
 
-function renderMsg(m) {
-  const cls = m.role === "user" ? "user" : "assistant";
-  const sender = m.role === "user" ? "👤 Гость" : "🤖 Ammar AI";
-  const time = m.time ? fmtTime(m.time) : "";
-  return `
-    <div class="msg ${cls}">
-      <div class="msg-sender">${sender}</div>
-      <div class="msg-bubble">${escHtml(m.content)}</div>
-      ${time ? `<div class="msg-time">${time}</div>` : ""}
-    </div>
-  `;
-}
-
-function appendMsg(role, content, time) {
-  const area = document.getElementById("msgArea");
-  if (!area) return;
-  const div = document.createElement("div");
-  div.innerHTML = renderMsg({ role, content, time });
-  area.appendChild(div.firstElementChild);
-  scrollMsgs();
-}
-
-function scrollMsgs() {
-  const a = document.getElementById("msgArea");
-  if (a) a.scrollTop = a.scrollHeight;
-}
-
-// ── SEND MESSAGE ───────────────────────────────────────────────
-function handleSendKey(e) {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendToGuest(); }
-}
-
-async function sendToGuest() {
-  const inp = document.getElementById("sendInput");
-  const btn = document.getElementById("sendBtn");
-  const msg = inp?.value?.trim();
-  if (!msg || !activeKey) return;
-  inp.value = "";
-  if (btn) btn.disabled = true;
+  // Load history
   try {
-    await api(`/api/admin/send/${encodeURIComponent(activeKey)}`, {
-      method: "POST",
-      body: JSON.stringify({ message: msg }),
-    });
-    appendMsg("assistant", `[Менеджер]: ${msg}`, new Date().toISOString());
-    showToast("✅ Сообщение отправлено");
+    const history = await api("/api/admin/history/" + encodeURIComponent(key));
+    const msgArea = document.getElementById("msg-area");
+    if (!msgArea) return;
+    if (!Array.isArray(history) || !history.length) {
+      msgArea.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px">История пуста</div>';
+      return;
+    }
+    msgArea.innerHTML = history.map(renderMsg).join("");
+    msgArea.scrollTop = msgArea.scrollHeight;
   } catch (e) {
-    showToast("❌ Ошибка отправки: " + e.message);
-  } finally {
-    if (btn) btn.disabled = false;
+    const m = document.getElementById("msg-area");
+    if (m) m.innerHTML = '<div style="color:var(--red);font-size:.8rem;text-align:center;padding:20px">Ошибка загрузки истории</div>';
   }
 }
 
-// ── SSE REALTIME ───────────────────────────────────────────────
-let evtSource = null;
+function renderMsg(m) {
+  const cls    = m.role === "user" ? "user" : "assistant";
+  const who    = m.role === "user" ? "👤 Гость" : "🤖 Ammar AI";
+  const bubble = esc(m.content || "");
+  const time   = fmtTime(m.time);
+  return `<div class="msg ${cls}">
+    <div class="msg-who">${who}</div>
+    <div class="msg-bubble">${bubble}</div>
+    ${time ? `<div class="msg-ts">${time}</div>` : ""}
+  </div>`;
+}
+
+function appendMsg(role, content) {
+  const area = document.getElementById("msg-area");
+  if (!area) return;
+  const div = document.createElement("div");
+  div.innerHTML = renderMsg({ role, content, time: new Date().toISOString() });
+  area.appendChild(div.firstElementChild);
+  area.scrollTop = area.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════
+// SEND MESSAGE
+// ═══════════════════════════════════════════════════════
+function sendKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+async function sendMsg() {
+  const inp = document.getElementById("send-input");
+  const btn = document.getElementById("send-btn");
+  const txt = inp?.value?.trim();
+  if (!txt || !activeKey) return;
+
+  inp.value = "";
+  if (btn) btn.disabled = true;
+
+  try {
+    await api("/api/admin/send/" + encodeURIComponent(activeKey), {
+      method: "POST",
+      body:   JSON.stringify({ message: txt }),
+    });
+    appendMsg("assistant", "👔 [Менеджер]: " + txt);
+    toast("✅ Сообщение отправлено");
+  } catch (e) {
+    toast("❌ Ошибка: " + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+    if (inp) inp.focus();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SSE — реальное время
+// ═══════════════════════════════════════════════════════
+let sse = null;
 
 function startSSE() {
-  if (evtSource) evtSource.close();
-  evtSource = new EventSource(`/api/admin/events?token=${encodeURIComponent(AUTH_TOKEN)}`);
+  if (sse) sse.close();
+  sse = new EventSource("/api/admin/events?token=" + encodeURIComponent(PASS));
 
-  evtSource.addEventListener("message", e => {
-    const data = JSON.parse(e.data);
-    handleSSEMessage(data);
+  sse.addEventListener("message", e => {
+    try {
+      const data = JSON.parse(e.data);
+      // Refresh guest list
+      loadGuests();
+      loadStats();
+      // If current guest → append new messages live
+      if (data.sessionKey === activeKey) {
+        if (data.userMessage) appendMsg("user",      data.userMessage);
+        if (data.botReply)    appendMsg("assistant", data.botReply);
+      }
+      // Alert on escalation
+      const combined = (data.userMessage || "") + (data.botReply || "");
+      if (/эскалаци|escalat|жалоб|complaint/i.test(combined)) {
+        toast("🚨 Эскалация! Ком. " + (data.room || "?"), 6000);
+        beep();
+      }
+    } catch {}
   });
 
-  evtSource.addEventListener("open", () => {
-    setConnStatus(true);
-  });
-
-  evtSource.onerror = () => {
-    setConnStatus(false);
-    // Retry in 5s
+  sse.onopen  = () => setOnline(true);
+  sse.onerror = () => {
+    setOnline(false);
     setTimeout(startSSE, 5000);
   };
 }
 
-function setConnStatus(live) {
-  document.getElementById("connDot").classList.toggle("live", live);
-  document.getElementById("connLabel").textContent = live ? "Live" : "Переподключение…";
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function setOnline(on) {
+  const dot   = document.getElementById("conn-dot");
+  const label = document.getElementById("conn-label");
+  if (!dot || !label) return;
+  dot.className   = "h-dot " + (on ? "online" : "offline");
+  label.textContent = on ? "Online" : "Переподключение…";
 }
 
-function handleSSEMessage(data) {
-  if (data.type === "message" || !data.type) {
-    const key = data.sessionKey;
-
-    // Update guests list
-    loadGuests();
-    refreshStats();
-
-    // If this guest is active — append message
-    if (key === activeKey) {
-      if (data.userMessage) appendMsg("user", data.userMessage, data.time);
-      if (data.botReply)    appendMsg("assistant", data.botReply, data.time);
-    } else {
-      // Mark as unread
-      unreadKeys.add(key);
-      renderGuestList();
-
-      // Show toast for escalation keywords
-      const combined = (data.userMessage || "") + (data.botReply || "");
-      if (/escalat|жалоб|шикоят|complaint|问题/i.test(combined)) {
-        showToast(`🚨 Эскалация! Номер ${data.room || "?"}`, 6000);
-        playAlert();
-      }
-    }
-  }
+let toastT = null;
+function toast(msg, dur = 3000) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove("show"), dur);
 }
 
-// ── ALERT SOUND ────────────────────────────────────────────────
-function playAlert() {
+function beep() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain); gain.connect(ctx.destination);
     osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
     osc.start(); osc.stop(ctx.currentTime + 0.5);
   } catch {}
 }
 
-// ── TOAST ──────────────────────────────────────────────────────
-let toastTimer = null;
-function showToast(msg, dur = 3000) {
-  const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), dur);
+function fmtTime(iso) {
+  if (!iso) return "";
+  try {
+    const d   = new Date(iso);
+    const now = new Date();
+    if (d.toDateString() === now.toDateString()) {
+      return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+    }
+    return d.toLocaleDateString("ru-RU", { day:"2-digit", month:"2-digit" })
+         + " " + d.toLocaleTimeString("ru-RU", { hour:"2-digit", minute:"2-digit" });
+  } catch { return ""; }
 }
 
-// ── HELPERS ────────────────────────────────────────────────────
-function escHtml(s) {
+function esc(s) {
   return String(s)
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;");
 }
 
-function fmtTime(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  if (sameDay) {
-    return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-  }
-  return d.toLocaleDateString("ru-RU", { day:"2-digit", month:"2-digit" })
-    + " " + d.toLocaleTimeString("ru-RU", { hour:"2-digit", minute:"2-digit" });
+function plural(n, one, few, many) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return n + " " + one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return n + " " + few;
+  return n + " " + many;
 }
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+checkLogin();
 </script>
 </body>
 </html>
