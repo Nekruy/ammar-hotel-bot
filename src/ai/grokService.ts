@@ -13,7 +13,8 @@ import { broadcastEvent } from "../utils/adminEvents";
 import { incMessages }   from "../utils/stats";
 
 // ── Scenarios dataset (читаем с диска при каждом вызове — мгновенный эффект после правок) ──
-const SCENARIOS_PATH = path.join(__dirname, "../data/scenarios.json");
+// process.cwd() = project root (надёжнее __dirname в динамически импортируемых модулях tsx)
+const SCENARIOS_PATH = path.join(process.cwd(), "src/data/scenarios.json");
 const LANG_KEY: Record<string, string> = {
   russian: "ru", tajik: "tj", english: "en", chinese: "cn",
 };
