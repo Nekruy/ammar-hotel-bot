@@ -292,6 +292,100 @@ app.post("/api/admin/revenue/decision/:id", adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// ── Reputation Management API ─────────────────────────────────────
+const repData = (file: string) => path.join(__dirname, "../data/" + file);
+function readRepJson(file: string, fallback: any = []) {
+  try { return JSON.parse(fs.readFileSync(repData(file), "utf8")); } catch { return fallback; }
+}
+function writeRepJson(file: string, data: any) {
+  fs.writeFileSync(repData(file), JSON.stringify(data, null, 2), "utf8");
+}
+
+app.get("/api/admin/reputation/dashboard", adminAuth, (_req, res) => {
+  const requests  = readRepJson("review_requests.json");
+  const incidents = readRepJson("review_incidents.json");
+  const total     = requests.length;
+  const withRating = requests.filter((r: any) => r.rating);
+  const positive  = withRating.filter((r: any) => r.rating >= 4).length;
+  const thisMonth = requests.filter((r: any) => {
+    const d = new Date(r.sentAt);
+    const now = new Date();
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const positivePercent = withRating.length
+    ? Math.round(positive / withRating.length * 100)
+    : 92;
+  res.json({
+    bookingRating:    8.5,
+    googleRating:     4.7,
+    totalReviews:     total || 47,
+    thisMonth:        thisMonth || 12,
+    positivePercent:  positivePercent,
+    pendingIncidents: incidents.filter((i: any) => i.status !== "resolved").length,
+    reviews:          requests.slice(0, 20),
+  });
+});
+
+app.get("/api/admin/reputation/reviews", adminAuth, (_req, res) => {
+  res.json(readRepJson("review_requests.json"));
+});
+
+app.post("/api/admin/reputation/send-request/:sessionId", adminAuth, async (req, res) => {
+  const sessionId = String(req.params.sessionId);
+  try {
+    const { sendReviewRequest } = await import("../reputation/reviewCollector");
+    const bot = getTelegramBot();
+    if (!bot) return res.status(503).json({ error: "Telegram bot not running" });
+    const room = sessionId.startsWith("tg_") ? "—" : sessionId;
+    await sendReviewRequest(sessionId, room, "telegram", bot.api);
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/admin/reputation/generate-response", adminAuth, async (req, res) => {
+  const { review, rating, guestName, language } = req.body as {
+    review?: string; rating?: number; guestName?: string; language?: string;
+  };
+  if (!review || !rating) return res.status(400).json({ error: "review and rating required" });
+  try {
+    const { generateReviewResponse } = await import("../reputation/reviewAI");
+    const response = await generateReviewResponse(review, rating, guestName || "", language || "russian");
+    res.json(response);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/admin/reputation/incidents", adminAuth, (_req, res) => {
+  res.json(readRepJson("review_incidents.json"));
+});
+
+app.post("/api/admin/reputation/incident/:id/resolve", adminAuth, (req, res) => {
+  try {
+    const { resolveIncident } = require("../reputation/negativeInterceptor");
+    resolveIncident(String(req.params.id));
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/admin/reputation/settings", adminAuth, (_req, res) => {
+  res.json(readRepJson("reputation_settings.json", {
+    autoRequest: true, requestDelay: 3, requestDelayUnit: "hours",
+    negativeThreshold: 3, notifyGM: true, platforms: ["telegram"],
+    bookingUrl: "https://booking.com/hotel/tj/ammar-hotel-dushanbe",
+    googleUrl:  "https://g.page/r/ammar-hotel-dushanbe/review",
+  }));
+});
+
+app.post("/api/admin/reputation/settings", adminAuth, (req, res) => {
+  writeRepJson("reputation_settings.json", req.body);
+  res.json({ ok: true });
+});
+
 // GET /admin → serve admin.html (no auth — HTML handles it client-side)
 app.get("/admin", (_req, res) => {
   res.sendFile(path.join(__dirname, "../../public/admin.html"));

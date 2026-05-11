@@ -1,0 +1,16 @@
+{
+  "autoRequest": true,
+  "requestDelay": 3,
+  "requestDelayUnit": "hours",
+  "negativeThreshold": 3,
+  "notifyGM": true,
+  "platforms": ["telegram"],
+  "bookingUrl": "https://booking.com/hotel/tj/ammar-hotel-dushanbe",
+  "googleUrl": "https://g.page/r/ammar-hotel-dushanbe/review",
+  "template": {
+    "ru": "Спасибо что выбрали AMMAR Hotel! Оцените ваше пребывание от 1 до 5.",
+    "tj": "Ташаккур барои интихоби AMMAR Hotel! Иқомататонро аз 1 то 5 баҳо диҳед.",
+    "en": "Thank you for choosing AMMAR Hotel! Please rate your stay from 1 to 5.",
+    "cn": "感谢您选择AMMAR Hotel！请为您的住宿评分，从1到5。"
+  }
+}

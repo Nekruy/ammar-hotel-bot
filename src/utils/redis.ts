@@ -1,14 +1,15 @@
 // src/utils/redis.ts — Сессии и история в памяти (без Redis для быстрого старта)
 
 export interface Session {
-  guestId:     string;
-  roomNumber?:  string;
-  guestName?:   string;
-  language:    "tajik" | "russian" | "english" | "chinese";
-  platform:    "telegram" | "whatsapp" | "web";
-  checkIn?:    string;
-  checkOut?:   string;
-  createdAt:   string;
+  guestId:        string;
+  roomNumber?:    string;
+  guestName?:     string;
+  language:       "tajik" | "russian" | "english" | "chinese";
+  platform:       "telegram" | "whatsapp" | "web";
+  checkIn?:       string;
+  checkOut?:      string;
+  createdAt:      string;
+  awaitingReview?: boolean;
 }
 
 export interface Message {

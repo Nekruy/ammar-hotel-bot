@@ -1,7 +1,7 @@
 // src/bot/telegramHandler.ts — Telegram бот для гостей
 import { Bot } from "grammy";
 import { chat, GuestCtx } from "../ai/grokService";
-import { getSession, setSession, getHistory, setHistory, Session } from "../utils/redis";
+import { getSession, setSession, getHistory, setHistory, updateSession, Session } from "../utils/redis";
 import { detectLanguage } from "../utils/detectLanguage";
 import { logger } from "../utils/logger";
 
@@ -129,6 +129,48 @@ export function createTelegramBot(): Bot {
 
     const key     = `tg_${uid}`;
     let session   = await getSession(key);
+
+    // ── Обработка ответа на запрос отзыва ────────────────────────────
+    if (session?.awaitingReview) {
+      const rating = parseInt(text);
+      if (rating >= 1 && rating <= 5) {
+        await updateSession(key, { awaitingReview: false });
+        const settings = await import("../reputation/reviewCollector")
+          .then(m => m.loadReputationSettings()).catch(() => null);
+        const threshold = settings?.negativeThreshold ?? 3;
+
+        if (rating <= threshold) {
+          const { interceptNegativeReview } = await import("../reputation/negativeInterceptor");
+          await interceptNegativeReview(
+            key, session.roomNumber || "—", rating, "", session.guestName || ""
+          );
+          await ctx.reply(
+            `😔 Жаль что что-то пошло не так.\n\n` +
+            `Напишите нам что произошло — наш GM свяжется с вами лично.\n` +
+            `Мы обязательно всё исправим! 🙏`
+          );
+        } else {
+          const bookingUrl = settings?.bookingUrl ||
+            "https://booking.com/hotel/tj/ammar-hotel-dushanbe";
+          await ctx.reply(
+            `🎉 Спасибо за высокую оценку!\n\n` +
+            `Пожалуйста, оставьте отзыв на Booking.com — это очень поможет нам:\n\n` +
+            `📝 ${bookingUrl}`
+          );
+        }
+
+        const { updateReviewRequest } = await import("../reputation/reviewCollector");
+        const requests = (await import("../reputation/reviewCollector")).loadReviewRequests();
+        const pending  = requests.find(r => r.guestId === key && r.status === "sent");
+        if (pending) {
+          updateReviewRequest(pending.id, {
+            rating,
+            status: rating > threshold ? "positive" : "negative",
+          });
+        }
+        return;
+      }
+    }
 
     // Нет сессии — принимаем номер комнаты
     if (!session) {
