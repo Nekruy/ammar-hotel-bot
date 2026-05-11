@@ -448,7 +448,7 @@ body {
     <div class="login-logo">AMMAR</div>
     <div class="login-sub">Grand Hotel · Панель управления</div>
     <input type="password" id="password" placeholder="Введите пароль" autocomplete="current-password">
-    <button class="btn-primary" onclick="doLogin()">Войти</button>
+    <button class="btn-primary" id="login-btn">Войти</button>
     <div class="login-err" id="login-err">Неверный пароль</div>
   </div>
 </div>
@@ -667,6 +667,7 @@ function doLogin() {
   } else {
     err.style.display = "block";
     document.getElementById("password").value = "";
+    document.getElementById("password").focus();
   }
 }
 
@@ -679,10 +680,6 @@ function doLogout() {
   activeKey = null; allGuests = [];
 }
 
-function checkLogin() {
-  if (localStorage.getItem("admin_logged_in") === "true") showPanel();
-}
-
 function showPanel() {
   document.getElementById("login-screen").style.display = "none";
   document.getElementById("admin-panel").style.display  = "flex";
@@ -693,7 +690,9 @@ function showPanel() {
   setInterval(loadData, 5000);
 }
 
-document.getElementById("password").addEventListener("keydown", e => {
+// Вешаем обработчики через addEventListener — CSP-совместимо
+document.getElementById("login-btn").addEventListener("click", doLogin);
+document.getElementById("password").addEventListener("keydown", function(e) {
   if (e.key === "Enter") doLogin();
 });
 
@@ -1281,7 +1280,7 @@ function plural(n, one, few, many) {
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
-checkLogin();
+if (localStorage.getItem("admin_logged_in") === "true") showPanel();
 </script>
 </body>
 </html>
