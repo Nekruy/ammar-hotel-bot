@@ -71,5 +71,22 @@
       "При вопросе о цене номера — ресепшн: 1",
       "При экстренной ситуации — 101/103 и ресепшн: 1"
     ]
+  },
+  "taxi_details": {
+    "city_price": "25-40 сом",
+    "airport_price": "80-120 сом",
+    "phone": ""
+  },
+  "upsell": {
+    "spa": true,
+    "excursions": true,
+    "late_checkout": true,
+    "upgrade": true,
+    "silent_mode": false
+  },
+  "bot_messages": {
+    "food_eta": "15-20 минут",
+    "housekeeping_eta": "10-15 минут",
+    "error_message": "Позвоните на ресепшн: 1"
   }
 }
