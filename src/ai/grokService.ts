@@ -1,6 +1,8 @@
 // src/ai/grokService.ts
 // AI движок — Groq (groq.com), совместим с OpenAI SDK
 
+import fs   from "fs";
+import path from "path";
 import OpenAI from "openai";
 import { getSystemPrompt } from "../utils/promptStore";
 import { TOOLS }         from "../config/tools";
@@ -9,6 +11,28 @@ import { logger }        from "../utils/logger";
 import { Message }       from "../utils/redis";
 import { broadcastEvent } from "../utils/adminEvents";
 import { incMessages }   from "../utils/stats";
+
+// ── Scenarios dataset (читаем с диска при каждом вызове — мгновенный эффект после правок) ──
+const SCENARIOS_PATH = path.join(__dirname, "../data/scenarios.json");
+const LANG_KEY: Record<string, string> = {
+  russian: "ru", tajik: "tj", english: "en", chinese: "cn",
+};
+
+function findScenario(message: string, language: string): string | null {
+  try {
+    const raw = fs.readFileSync(SCENARIOS_PATH, "utf8");
+    const { scenarios = [] } = JSON.parse(raw);
+    const msg = message.toLowerCase();
+    const key = LANG_KEY[language] || "ru";
+    for (const sc of scenarios) {
+      const triggers: string[] = sc.triggers || [];
+      if (triggers.some((t: string) => msg.includes(t.toLowerCase()))) {
+        return sc.responses?.[key] || null;
+      }
+    }
+  } catch { /* файл не найден или повреждён */ }
+  return null;
+}
 
 // Groq использует OpenAI-совместимый API
 const grok = new OpenAI({
@@ -79,6 +103,30 @@ export async function chat(
   history:     Message[],
   guest:       GuestCtx
 ): Promise<{ reply: string; updatedHistory: Message[] }> {
+
+  // Проверяем датасет — если нашли готовый ответ, не тратим токены Groq
+  const scenarioReply = findScenario(userMessage, guest.language);
+  if (scenarioReply) {
+    const now = new Date().toISOString();
+    const updatedHistory: Message[] = [
+      ...history,
+      { role: "user" as const,      content: userMessage, time: now },
+      { role: "assistant" as const, content: scenarioReply, time: now },
+    ].slice(-20);
+    incMessages();
+    broadcastEvent("message", {
+      sessionKey: guest.guestId,
+      room:       guest.roomNumber ?? "—",
+      platform:   guest.platform,
+      language:   guest.language,
+      guestName:  guest.guestName,
+      userMessage,
+      botReply:   scenarioReply,
+      time:       now,
+    });
+    logger.info("📋 Scenario hit — Groq skipped", { room: guest.roomNumber });
+    return { reply: scenarioReply, updatedHistory };
+  }
 
   const systemFull = buildSystem(guest);
 

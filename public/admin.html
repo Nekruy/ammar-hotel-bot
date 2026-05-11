@@ -434,6 +434,55 @@ body {
 }
 #toast.show { transform: translateY(0); opacity: 1; }
 
+/* ─── DATASET ─────────────────────────────────────────── */
+.dataset-body { flex: 1; display: flex; overflow: hidden; }
+.sc-list-wrap {
+  width: 360px; min-width: 280px;
+  display: flex; flex-direction: column;
+  border-right: 1px solid var(--border); overflow: hidden;
+}
+.sc-filters {
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  display: flex; flex-wrap: wrap; gap: 4px; flex-shrink: 0;
+}
+.sc-filter-btn {
+  padding: 3px 10px; border-radius: 20px;
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: .71rem; font-family: inherit;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.sc-filter-btn:hover  { border-color: var(--gold); color: var(--gold); }
+.sc-filter-btn.active { background: rgba(196,160,96,.15); border-color: var(--gold); color: var(--gold); font-weight: 600; }
+.sc-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+.sc-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 9px; padding: 11px 13px;
+  cursor: pointer; transition: all .15s;
+}
+.sc-card:hover  { border-color: rgba(196,160,96,.35); }
+.sc-card.active { border-color: var(--gold); background: rgba(196,160,96,.06); }
+.sc-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sc-card-name { font-size: .84rem; font-weight: 600; flex: 1; }
+.sc-card-fn {
+  font-size: .61rem; padding: 2px 7px; border-radius: 5px;
+  background: rgba(196,160,96,.12); color: var(--gold);
+}
+.sc-card-triggers { font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-card-preview  { font-size: .72rem; color: var(--text); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: .65; }
+.sc-edit-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.sc-edit-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+.sc-edit-hd {
+  padding: 10px 16px; font-size: .72rem; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .4px;
+  border-bottom: 1px solid var(--border); background: var(--bg2);
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+.sc-edit-form { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.sc-edit-actions {
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+}
+
 /* ─── SCROLLBARS ──────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -477,6 +526,9 @@ body {
       </div>
       <div class="nav-item" data-tab="prompt">
         <span class="nav-icon">🤖</span> Бот/Промпт
+      </div>
+      <div class="nav-item" data-tab="dataset">
+        <span class="nav-icon">📋</span> Датасет
       </div>
     </div>
     <div class="sidenav-foot">
@@ -643,6 +695,34 @@ body {
       </div>
     </div>
 
+    <!-- ── PANEL 6: DATASET ── -->
+    <div class="panel" id="panel-dataset">
+      <div class="panel-hd">
+        <span>📋</span>
+        <div>
+          <div style="font-size:.98rem;font-weight:600;">Датасет и ответы бота</div>
+          <div class="panel-hd-sub">Готовые ответы — не тратят токены Groq</div>
+        </div>
+        <div class="hd-space"></div>
+        <button class="btn-outline" onclick="addScenario()">+ Добавить</button>
+        <button class="btn-save" style="margin-left:8px" onclick="saveAllScenarios()">💾 Сохранить датасет</button>
+      </div>
+      <div class="dataset-body">
+        <div class="sc-list-wrap">
+          <div class="sc-filters" id="sc-filters"></div>
+          <div class="sc-list" id="sc-list">
+            <div style="padding:30px;text-align:center;color:var(--muted);font-size:.82rem">Загрузка…</div>
+          </div>
+        </div>
+        <div class="sc-edit-wrap" id="sc-edit-wrap">
+          <div class="sc-edit-placeholder">
+            <div style="font-size:2.5rem;opacity:.15">📋</div>
+            <div style="font-size:.84rem;color:var(--muted)">Выберите сценарий для редактирования</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /main-content -->
 </div><!-- /admin-panel -->
 
@@ -716,7 +796,8 @@ function switchTab(tab) {
   document.querySelectorAll(".panel").forEach(el => {
     el.classList.toggle("active", el.id === "panel-" + tab);
   });
-  if (tab === "hotel" && !hotelLoaded) loadHotelInfo();
+  if (tab === "hotel"   && !hotelLoaded)    loadHotelInfo();
+  if (tab === "dataset" && !scenariosLoaded) loadScenarios();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1275,6 +1356,217 @@ function plural(n, one, few, many) {
   if (m10 === 1 && m100 !== 11) return n + " " + one;
   if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return n + " " + few;
   return n + " " + many;
+}
+
+// ═══════════════════════════════════════════════════
+// DATASET
+// ═══════════════════════════════════════════════════
+let scenariosData    = { version: "1.0", updated: "", scenarios: [] };
+let scenariosLoaded  = false;
+let currentEditId    = null;
+let scFilterFn       = "all";
+
+const FN_LABELS = {
+  room_service:       "🍽 Room Service",
+  housekeeping:       "🛏 Хаускипинг",
+  taxi:               "🚕 Такси",
+  info:               "ℹ️ Информация",
+  complaint:          "😤 Жалобы",
+  checkout_services:  "🕐 Выезд",
+  upsell:             "💎 Upsell",
+  guide:              "🗺 Гид",
+  reception:          "🛎 Ресепшн",
+};
+
+async function loadScenarios() {
+  scenariosLoaded = true;
+  try {
+    scenariosData = await api("/api/admin/scenarios");
+    renderScenarioFilters();
+    renderScenarioList();
+  } catch(e) {
+    document.getElementById("sc-list").innerHTML =
+      `<div style="color:var(--red);padding:20px">Ошибка: ${esc(e.message)}</div>`;
+  }
+}
+
+function getUniqueFns() {
+  return [...new Set(scenariosData.scenarios.map(s => s.fn).filter(Boolean))];
+}
+
+function renderScenarioFilters() {
+  const fns = getUniqueFns();
+  const total = scenariosData.scenarios.length;
+  document.getElementById("sc-filters").innerHTML =
+    `<button class="sc-filter-btn ${scFilterFn==='all'?'active':''}" onclick="setScFilter('all')">Все (${total})</button>` +
+    fns.map(fn => {
+      const cnt = scenariosData.scenarios.filter(s => s.fn === fn).length;
+      const lbl = FN_LABELS[fn] || fn;
+      return `<button class="sc-filter-btn ${scFilterFn===fn?'active':''}" onclick="setScFilter('${fn}')">${lbl} (${cnt})</button>`;
+    }).join('');
+}
+
+function setScFilter(fn) {
+  scFilterFn = fn;
+  renderScenarioFilters();
+  renderScenarioList();
+}
+
+function renderScenarioList() {
+  const list = document.getElementById("sc-list");
+  let items = scenariosData.scenarios;
+  if (scFilterFn !== "all") items = items.filter(s => s.fn === scFilterFn);
+  if (!items.length) {
+    list.innerHTML = `<div style="padding:30px;text-align:center;color:var(--muted);font-size:.82rem">Нет сценариев</div>`;
+    return;
+  }
+  list.innerHTML = items.map(sc => {
+    const fnLabel  = FN_LABELS[sc.fn] || sc.fn || "—";
+    const triggers = (sc.triggers || []).join(", ");
+    const preview  = sc.responses?.ru || sc.responses?.en || "";
+    const isActive = currentEditId === sc.id;
+    return `<div class="sc-card${isActive?' active':''}" onclick="selectScenario('${esc(sc.id)}')">
+      <div class="sc-card-top">
+        <span class="sc-card-name">${esc(sc.name || sc.id)}</span>
+        <span class="sc-card-fn">${esc(fnLabel)}</span>
+      </div>
+      <div class="sc-card-triggers">🔍 ${esc(triggers || '—')}</div>
+      ${preview ? `<div class="sc-card-preview">${esc(preview)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectScenario(id) {
+  const sc = scenariosData.scenarios.find(s => s.id === id);
+  if (!sc) return;
+  currentEditId = id;
+  renderScenarioList();
+  openEditForm(sc);
+}
+
+function openEditForm(sc) {
+  let fnOptions = Object.entries(FN_LABELS).map(([v, l]) =>
+    `<option value="${v}"${sc.fn===v?' selected':''}>${l}</option>`
+  ).join('');
+  if (sc.fn && !FN_LABELS[sc.fn]) {
+    fnOptions = `<option value="${esc(sc.fn)}" selected>${esc(sc.fn)}</option>` + fnOptions;
+  }
+  const isNew = !sc.id;
+  document.getElementById('sc-edit-wrap').innerHTML = `
+    <div class="sc-edit-hd">
+      ${isNew ? 'Новый сценарий' : `Сценарий &nbsp;<span style="color:var(--gold)">${esc(sc.id)}</span>`}
+      <div class="hd-space"></div>
+    </div>
+    <div class="sc-edit-form">
+      <div class="field">
+        <label>Название сценария</label>
+        <input type="text" id="sc-f-name" value="${esc(sc.name||'')}">
+      </div>
+      <div style="display:flex;gap:10px">
+        <div class="field" style="flex:1">
+          <label>Функция (fn)</label>
+          <select id="sc-f-fn" style="padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.86rem;font-family:inherit;outline:none">${fnOptions}</select>
+        </div>
+        <div class="field" style="flex:1">
+          <label>ID</label>
+          <input type="text" id="sc-f-id" value="${esc(sc.id||'')}" style="opacity:.5" readonly>
+        </div>
+      </div>
+      <div class="field">
+        <label>Триггеры (через запятую)</label>
+        <input type="text" id="sc-f-triggers" value="${esc((sc.triggers||[]).join(', '))}">
+      </div>
+      <div class="field">
+        <label>🇷🇺 Ответ на РУССКОМ</label>
+        <textarea id="sc-f-ru" rows="3">${esc(sc.responses?.ru||'')}</textarea>
+      </div>
+      <div class="field">
+        <label>🇹🇯 Ответ на ТАДЖИКСКОМ</label>
+        <textarea id="sc-f-tj" rows="3">${esc(sc.responses?.tj||'')}</textarea>
+      </div>
+      <div class="field">
+        <label>🇬🇧 Ответ на АНГЛИЙСКОМ</label>
+        <textarea id="sc-f-en" rows="3">${esc(sc.responses?.en||'')}</textarea>
+      </div>
+      <div class="field">
+        <label>🇨🇳 Ответ на КИТАЙСКОМ</label>
+        <textarea id="sc-f-cn" rows="3">${esc(sc.responses?.cn||'')}</textarea>
+      </div>
+    </div>
+    <div class="sc-edit-actions">
+      <button class="btn-save" onclick="scEditSave()">💾 Сохранить</button>
+      ${!isNew ? `<button class="btn-outline" style="border-color:var(--red);color:var(--red)" onclick="scEditDelete('${esc(sc.id)}')">🗑 Удалить</button>` : ''}
+    </div>`;
+}
+
+async function scEditSave() {
+  const name     = document.getElementById("sc-f-name")?.value?.trim();
+  const fn       = document.getElementById("sc-f-fn")?.value || "info";
+  const triggers = (document.getElementById("sc-f-triggers")?.value || "")
+                     .split(",").map(t => t.trim()).filter(Boolean);
+  const ru = document.getElementById("sc-f-ru")?.value?.trim() || "";
+  const tj = document.getElementById("sc-f-tj")?.value?.trim() || "";
+  const en = document.getElementById("sc-f-en")?.value?.trim() || "";
+  const cn = document.getElementById("sc-f-cn")?.value?.trim() || "";
+
+  if (!name) { toast("❌ Введите название сценария"); return; }
+
+  if (currentEditId) {
+    const idx = scenariosData.scenarios.findIndex(s => s.id === currentEditId);
+    if (idx >= 0) {
+      scenariosData.scenarios[idx] = { ...scenariosData.scenarios[idx], name, fn, triggers, responses: { ru, tj, en, cn } };
+    }
+  } else {
+    const prefix = fn.slice(0, 2).toUpperCase().replace(/[^A-Z]/g, "X");
+    const newId  = prefix + "-" + Date.now().toString().slice(-4);
+    scenariosData.scenarios.push({ id: newId, fn, name, triggers, responses: { ru, tj, en, cn } });
+    currentEditId = newId;
+    document.getElementById("sc-f-id").value = newId;
+  }
+
+  try {
+    await api("/api/admin/scenarios", { method: "POST", body: JSON.stringify(scenariosData) });
+    toast("✅ Сохранено! Бот ответит новым текстом сразу");
+    renderScenarioFilters();
+    renderScenarioList();
+  } catch(e) {
+    toast("❌ Ошибка: " + e.message);
+  }
+}
+
+async function scEditDelete(id) {
+  if (!confirm(`Удалить сценарий "${id}"?`)) return;
+  scenariosData.scenarios = scenariosData.scenarios.filter(s => s.id !== id);
+  currentEditId = null;
+  document.getElementById('sc-edit-wrap').innerHTML = `
+    <div class="sc-edit-placeholder">
+      <div style="font-size:2.5rem;opacity:.15">🗑</div>
+      <div style="font-size:.84rem;color:var(--muted)">Сценарий удалён</div>
+    </div>`;
+  try {
+    await api("/api/admin/scenarios", { method: "POST", body: JSON.stringify(scenariosData) });
+    toast("🗑 Сценарий удалён");
+    renderScenarioFilters();
+    renderScenarioList();
+  } catch(e) {
+    toast("❌ Ошибка: " + e.message);
+  }
+}
+
+function addScenario() {
+  if (currentTab !== "dataset") switchTab("dataset");
+  currentEditId = null;
+  renderScenarioList();
+  openEditForm({ id: '', fn: 'room_service', name: '', triggers: [], responses: { ru: '', tj: '', en: '', cn: '' } });
+}
+
+async function saveAllScenarios() {
+  try {
+    await api("/api/admin/scenarios", { method: "POST", body: JSON.stringify(scenariosData) });
+    toast("✅ Датасет сохранён и применён");
+  } catch(e) {
+    toast("❌ Ошибка: " + e.message);
+  }
 }
 
 // ═══════════════════════════════════════════════════

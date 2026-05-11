@@ -163,6 +163,29 @@ app.post("/api/admin/hotel-info", adminAuth, (req, res) => {
   }
 });
 
+// GET /api/admin/scenarios — read scenarios.json
+app.get("/api/admin/scenarios", adminAuth, (_req, res) => {
+  try {
+    const fp = path.join(__dirname, "../data/scenarios.json");
+    res.json(JSON.parse(fs.readFileSync(fp, "utf8")));
+  } catch {
+    res.json({ version: "1.0", updated: "", scenarios: [] });
+  }
+});
+
+// POST /api/admin/scenarios — overwrite scenarios.json
+app.post("/api/admin/scenarios", adminAuth, (req, res) => {
+  try {
+    const data = req.body;
+    data.updated = new Date().toISOString().slice(0, 10);
+    const fp = path.join(__dirname, "../data/scenarios.json");
+    fs.writeFileSync(fp, JSON.stringify(data, null, 2), "utf8");
+    res.json({ ok: true, message: "Датасет обновлён!" });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // GET /api/admin/menu — current in-memory menu
 app.get("/api/admin/menu", adminAuth, (_req, res) => {
   res.json(getFullMenu());
