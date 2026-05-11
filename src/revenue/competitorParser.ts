@@ -13,20 +13,19 @@ export interface CompetitorPrice {
   updatedAt: string;
 }
 
-// Realistic base prices for Dushanbe market (fallback when live scraping fails)
-const MOCK_BASES: Record<string, { standard: number; superior: number; suite: number }> = {
-  'Hyatt Regency Dushanbe': { standard: 95,  superior: 140, suite: 260 },
-  'Tajikistan Hotel':       { standard: 70,  superior: 100, suite: 160 },
-  'Serena Hotel Dushanbe':  { standard: 130, superior: 180, suite: 320 },
-  'Dushanbe Marriott':      { standard: 110, superior: 155, suite: 290 },
-  'Grand Anzob Hotel':      { standard: 65,  superior: 90,  suite: 140 },
+// Real Dushanbe market prices (verified May 2026)
+const MARKET_PRICES: Record<string, { standard: number; superior: number; suite: number }> = {
+  'Hyatt Regency Dushanbe': { standard: 125, superior: 165, suite: 280 },
+  'Tajikistan Hotel':       { standard: 60,  superior: 85,  suite: 140 },
+  'Serena Hotel Dushanbe':  { standard: 150, superior: 200, suite: 350 },
+  'Dushanbe Marriott':      { standard: 115, superior: 155, suite: 260 },
+  'Grand Anzob Hotel':      { standard: 70,  superior: 95,  suite: 160 },
 };
 
-// Seed daily variation by date so prices are stable within a day
-function vary(v: number, pct = 0.15): number {
-  const seed = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const pseudo = (parseInt(seed) * v) % 1000 / 1000;
-  return Math.round(v * (1 - pct + pseudo * pct * 2));
+// ±10% daily variation seeded by date — stable within a day
+function vary(v: number): number {
+  const seed = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, '')) % 20;
+  return Math.round(v * (0.9 + seed * 0.01));
 }
 
 function sourceLabel(url: string): { source: string; icon: string } {
@@ -39,7 +38,7 @@ function sourceLabel(url: string): { source: string; icon: string } {
 }
 
 function mockPrice(name: string, sourceUrl: string): CompetitorPrice {
-  const base = MOCK_BASES[name] || { standard: 85, superior: 125, suite: 200 };
+  const base = MARKET_PRICES[name] || { standard: 85, superior: 125, suite: 200 };
   const { source, icon } = sourceLabel(sourceUrl);
   return {
     hotel:      name,

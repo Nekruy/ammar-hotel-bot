@@ -573,6 +573,14 @@ body {
 .rev-analyze-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .rev-empty { padding: 32px; text-align: center; color: var(--muted); font-size: .83rem; line-height: 1.8; }
 .rev-spinner { padding: 24px; text-align: center; color: var(--muted); font-size: .83rem; }
+.rev-event-card { background:var(--bg3); border:1px solid var(--border); border-left:3px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; }
+.rev-event-card-date { font-size:.74rem; color:var(--muted); margin-bottom:4px; }
+.rev-event-card-name { font-size:.95rem; font-weight:600; margin-bottom:6px; }
+.rev-event-card-impact { font-size:.82rem; color:var(--green); margin-bottom:4px; }
+.rev-event-card-note { font-size:.78rem; color:var(--muted); font-style:italic; }
+.rev-event-add-form { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; align-items:flex-end; }
+.rev-event-add-form input { padding:8px 12px; background:var(--bg3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:.82rem; font-family:inherit; outline:none; }
+.rev-last-updated { font-size:.75rem; color:var(--muted); }
 .rev-comp-actions { display: flex; gap: 6px; }
 
 /* ─── SCROLLBARS ──────────────────────────────────────── */
@@ -810,6 +818,10 @@ body {
 
           <!-- ── ТАБ: ДАШБОРД ── -->
           <div class="rev-tab active" id="rev-tab-dash">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <span class="rev-last-updated" id="rev-last-updated"></span>
+              <button class="btn-outline" id="rev-refresh-btn" onclick="refreshRevenue()">🔄 Обновить цены</button>
+            </div>
             <div class="rev-stat-row" id="rev-stats">
               <div class="stat-card"><div class="stat-card-label">🏨 Наша цена (стандарт)</div><div class="stat-card-val" id="rev-s-our">—</div><div class="stat-card-sub">Standard room</div></div>
               <div class="stat-card"><div class="stat-card-label">📊 Среднее рынка</div><div class="stat-card-val" id="rev-s-avg">—</div><div class="stat-card-sub">по конкурентам</div></div>
@@ -860,21 +872,23 @@ body {
           <!-- ── ТАБ: ПРОГНОЗ 90 ДНЕЙ ── -->
           <div class="rev-tab" id="rev-tab-forecast">
             <div class="rev-chart-wrap">
-              <div class="rev-chart-title">📅 Прогноз загрузки и рекомендуемых цен — 90 дней</div>
+              <div class="rev-chart-title">📅 Прогноз цен и загрузки — 90 дней</div>
               <canvas id="rev-forecast-chart" style="width:100%;height:200px;display:block"></canvas>
             </div>
-            <div class="section-title">События и праздники</div>
-            <div class="rev-table-wrap">
-              <table class="rev-table">
-                <thead><tr><th>Дата</th><th>Событие</th><th>Влияние на цену</th><th></th></tr></thead>
-                <tbody id="rev-events-list"></tbody>
-              </table>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 0 12px">
+              <div class="section-title" style="margin:0">📆 Ближайшие события</div>
+              <button class="btn-save" id="rev-forecast-btn" onclick="createForecast()">📊 Создать прогноз на 90 дней</button>
             </div>
-            <div class="rev-event-add" id="rev-event-add-row">
-              <input type="date"  id="rev-ev-date"   placeholder="Дата">
-              <input type="text"  id="rev-ev-name"   placeholder="Название события" style="flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;font-family:inherit;outline:none">
-              <input type="text"  id="rev-ev-impact" placeholder="+20%" style="width:80px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;font-family:inherit;outline:none">
-              <button class="btn-save" style="padding:8px 14px" onclick="addRevEvent()">+ Добавить</button>
+            <div id="rev-event-feed"><div class="rev-spinner">Загрузка…</div></div>
+            <div id="rev-forecast-result"></div>
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+              <div class="section-title" style="margin-bottom:10px">➕ Добавить событие</div>
+              <div class="rev-event-add-form">
+                <input type="date" id="rev-ev-date" placeholder="Дата">
+                <input type="text" id="rev-ev-name" placeholder="Название события" style="flex:1;min-width:200px">
+                <input type="text" id="rev-ev-impact" placeholder="+20%" style="width:80px">
+                <button class="btn-save" style="padding:8px 14px" onclick="addRevEvent()">+ Добавить</button>
+              </div>
             </div>
           </div>
 
@@ -1579,8 +1593,25 @@ function switchRevTab(tab, btn) {
   if (tab === 'recs')        loadRevRecommendations();
 }
 
+let revAutoRefresh = null;
+
 function initRevenue() {
   loadRevDashboard();
+  if (revAutoRefresh) clearInterval(revAutoRefresh);
+  revAutoRefresh = setInterval(loadRevDashboard, 60000);
+}
+
+async function refreshRevenue() {
+  const btn = document.getElementById('rev-refresh-btn');
+  if (btn) { btn.textContent = '⏳ Анализирую...'; btn.disabled = true; }
+  try {
+    await api('/api/admin/revenue/analyze', { method: 'POST', body: '{}' });
+    await loadRevDashboard();
+    toast('✅ Цены обновлены!');
+  } catch(e) { toast('❌ ' + e.message); }
+  finally {
+    if (btn) { btn.textContent = '🔄 Обновить цены'; btn.disabled = false; }
+  }
 }
 
 // ── Dashboard ──────────────────────────────────────
@@ -1597,6 +1628,8 @@ async function loadRevDashboard() {
     renderRevStats(comps, ourStd, recs, latestPrices);
     drawRevPriceChart(comps, ourStd, latestPrices);
     renderRevDashTable(comps, facts, latestPrices);
+    const updEl = document.getElementById('rev-last-updated');
+    if (updEl) updEl.textContent = 'Обновлено: ' + new Date().toLocaleTimeString('ru-RU');
   } catch(e) {
     document.getElementById('rev-stats').innerHTML =
       `<div style="color:var(--red);grid-column:1/-1">Ошибка: ${esc(e.message)}</div>`;
@@ -1830,25 +1863,99 @@ async function loadRevForecast() {
     revEvents = await api('/api/admin/revenue/events').catch(() => []);
     const facts = await api('/api/admin/hotel-info').catch(() => ({}));
     const ourStd = facts?.prices?.rooms?.standard || 80;
-    renderRevEvents();
+    renderRevEventFeed();
     drawRevForecastChart(revEvents, ourStd);
   } catch(e) { toast('❌ '+e.message); }
 }
 
-function renderRevEvents() {
-  const tbody = document.getElementById('rev-events-list');
-  if (!revEvents.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:14px">Нет событий</td></tr>';
+function renderRevEventFeed() {
+  const feedEl = document.getElementById('rev-event-feed');
+  if (!feedEl) return;
+  const now = Date.now();
+  const upcoming = revEvents
+    .filter(e => {
+      const diff = (new Date(e.date).getTime() - now) / 86400000;
+      return diff >= -1 && diff <= 60;
+    })
+    .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (!upcoming.length) {
+    feedEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;font-size:.84rem">Нет событий в ближайшие 60 дней</div>';
     return;
   }
-  tbody.innerHTML = revEvents.map((e,i) =>
-    `<tr>
-      <td>${esc(e.date)}</td>
-      <td>${esc(e.name)}</td>
-      <td style="color:var(--green);font-weight:600">${esc(e.impact)}</td>
-      <td><button class="btn-sm" onclick="deleteRevEvent(${i})">✕</button></td>
-    </tr>`
-  ).join('');
+
+  const impactColors = { very_high: '#5a3aaa', high: '#4a6aaa', medium: '#4a7a4a', low: 'var(--border)' };
+  const impactLabels = { very_high: 'Очень высокий', high: 'Высокий', medium: 'Средний', low: 'Низкий' };
+  const urgencyNotes = {
+    very_high: '🔴 СРОЧНО: поднять тариф за 2 недели',
+    high:      '🟠 Рекомендуем поднять тариф заранее',
+    medium:    '🟡 Умеренный спрос, скорректируйте цену',
+    low:       '🟢 Плановый период, стандартные тарифы',
+  };
+
+  feedEl.innerHTML = upcoming.map(e => {
+    const diff = Math.round((new Date(e.date).getTime() - now) / 86400000);
+    const daysLabel = diff <= 0 ? 'Сегодня' : diff === 1 ? 'Завтра' : `Через ${diff} дн.`;
+    const dateLabel = new Date(e.date).toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
+    const nm = e.name.toLowerCase();
+    const icon = nm.includes('саммит') || nm.includes('форум') || nm.includes('конференц') ? '🏛'
+               : nm.includes('фестиваль') ? '🎵'
+               : nm.includes('навруз') || nm.includes('рамадан') || nm.includes('курбан') ? '☪️'
+               : '🎉';
+    const borderCol = impactColors[e.impact] || 'var(--border)';
+    const pct = e.demandMultiplier ? Math.round((e.demandMultiplier - 1) * 100) : null;
+    const impactStr = pct !== null ? `↑+${pct}% к цене · ${impactLabels[e.impact] || e.impact}`
+                                   : esc(e.impact || '');
+    const note = urgencyNotes[e.impact] || '';
+    return `<div class="rev-event-card" style="border-left-color:${borderCol}">
+      <div class="rev-event-card-date">📅 ${daysLabel} · ${dateLabel}</div>
+      <div class="rev-event-card-name">${icon} ${esc(e.name)}</div>
+      <div class="rev-event-card-impact">Влияние: ${impactStr}</div>
+      ${note ? `<div class="rev-event-card-note">${note}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function createForecast() {
+  const btn = document.getElementById('rev-forecast-btn');
+  const resultEl = document.getElementById('rev-forecast-result');
+  if (btn) { btn.textContent = '⏳ AI строит прогноз...'; btn.disabled = true; }
+  if (resultEl) resultEl.innerHTML = '';
+  try {
+    const r = await api('/api/admin/revenue/analyze', { method: 'POST', body: '{}' });
+    if (r.ok && r.recommendation) {
+      const rec = r.recommendation;
+      const now = Date.now();
+      const soon = revEvents
+        .filter(e => { const d = (new Date(e.date).getTime()-now)/86400000; return d>=0 && d<=90; })
+        .sort((a,b) => a.date.localeCompare(b.date))
+        .slice(0, 8);
+      let html = `<div style="background:var(--bg3);border:1px solid var(--gold);border-radius:10px;padding:16px;margin-top:14px">
+        <div style="font-size:.9rem;font-weight:600;color:var(--gold);margin-bottom:10px">📊 Прогноз AI на 90 дней</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">${esc(rec.analysis || rec.reason)}</div>`;
+      if (soon.length) {
+        html += `<div style="font-size:.83rem;font-weight:600;margin-bottom:8px">Рекомендуемые цены по событиям:</div>`;
+        soon.forEach(e => {
+          const mult = e.demandMultiplier || 1.1;
+          const price = Math.round((rec.current?.standard || 80) * mult);
+          const pct   = Math.round((mult-1)*100);
+          const dl = new Date(e.date).toLocaleDateString('ru-RU',{day:'numeric',month:'long'});
+          html += `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:.82rem">
+            <span>${dl} — ${esc(e.name)}</span>
+            <span style="color:var(--green);font-weight:600;white-space:nowrap;padding-left:12px">$${price} (+${pct}%)</span>
+          </div>`;
+        });
+      }
+      html += `</div>`;
+      if (resultEl) resultEl.innerHTML = html;
+      toast('✅ Прогноз готов!');
+    } else {
+      toast('❌ ' + (r.error || 'Ошибка анализа'));
+    }
+  } catch(e) { toast('❌ ' + e.message); }
+  finally {
+    if (btn) { btn.textContent = '📊 Создать прогноз на 90 дней'; btn.disabled = false; }
+  }
 }
 
 async function addRevEvent() {
@@ -1856,19 +1963,19 @@ async function addRevEvent() {
   const name   = document.getElementById('rev-ev-name')?.value?.trim();
   const impact = document.getElementById('rev-ev-impact')?.value?.trim();
   if (!date || !name) { toast('❌ Заполните дату и название'); return; }
-  revEvents.push({ date, name, impact: impact || '+10%' });
+  revEvents.push({ date, name, impact: 'medium', notes: impact || '' });
   revEvents.sort((a,b) => a.date.localeCompare(b.date));
   await saveRevEvents();
   document.getElementById('rev-ev-date').value   = '';
   document.getElementById('rev-ev-name').value   = '';
   document.getElementById('rev-ev-impact').value = '';
-  renderRevEvents();
+  renderRevEventFeed();
 }
 
 async function deleteRevEvent(i) {
   revEvents.splice(i, 1);
   await saveRevEvents();
-  renderRevEvents();
+  renderRevEventFeed();
 }
 
 async function saveRevEvents() {
@@ -1897,9 +2004,10 @@ function drawRevForecastChart(events, ourStd) {
     return Math.min(100, base + Math.round((Math.random()-0.5)*10));
   });
 
+  const impactMult = { very_high:1.45, high:1.25, medium:1.1, low:1.05 };
   const prices = occupancy.map((occ,i) => {
     const ev = events.find(e => e.date === new Date(Date.now()+i*86400000).toISOString().slice(0,10));
-    const evMult = ev ? 1 + parseInt(ev.impact)/100 : 1;
+    const evMult = ev ? (ev.demandMultiplier || impactMult[ev.impact] || 1 + parseInt(ev.impact||'0')/100) : 1;
     const occMult = occ >= 80 ? 1.25 : occ >= 65 ? 1.1 : 1.0;
     return Math.round(ourStd * evMult * occMult);
   });
