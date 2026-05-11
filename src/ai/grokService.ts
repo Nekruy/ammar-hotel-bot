@@ -19,65 +19,144 @@ const LANG_KEY: Record<string, string> = {
   russian: "ru", tajik: "tj", english: "en", chinese: "cn",
 };
 
-function findScenario(message: string, language: string): { reply: string; id: string } | null {
+function findScenario(message: string, language: string): { id: string; response: string } | null {
   try {
     const raw = fs.readFileSync(SCENARIOS_PATH, "utf8");
     const { scenarios = [] } = JSON.parse(raw);
-    const msg = message.toLowerCase();
-    const key = LANG_KEY[language] || "ru";
+    const msg  = message.toLowerCase().trim();
+    const lang = LANG_KEY[language] || "ru";
     for (const sc of scenarios) {
       const triggers: string[] = sc.triggers || [];
       if (triggers.some((t: string) => msg.includes(t.toLowerCase()))) {
-        const reply = sc.responses?.[key];
-        if (reply) return { reply, id: sc.id as string };
+        const response = sc.responses?.[lang];
+        if (response) {
+          console.log(`📋 Датасет найден: ${sc.id}`);
+          return { id: sc.id as string, response };
+        }
       }
     }
   } catch { /* файл не найден или повреждён */ }
   return null;
 }
 
-// Уведомляем персонал для action-сценариев (taxi, housekeeping)
-// Вызывается fire-and-forget параллельно с возвратом ответа гостю
-async function fireScenarioActions(msg: string, guest: GuestCtx): Promise<void> {
-  const m = msg.toLowerCase();
-  try {
-    // Такси / трансфер / аэропорт
-    if (m.includes("такси") || m.includes("трансфер") || m.includes("аэропорт") ||
-        m.includes("airport") || m.includes("transfer") || m.includes("фурудгоҳ") || m.includes("机场")) {
-      const isAirport = m.includes("аэропорт") || m.includes("airport") || m.includes("фурудгоҳ") || m.includes("机场");
-      await executeToolCall("arrange_taxi", {
-        room_number: guest.roomNumber,
-        destination:  isAirport ? "Аэропорт Душанбе" : "уточнить",
-        pickup_time:  "уточнить у гостя",
-        taxi_type:    isAirport ? "airport_transfer" : "standard",
-        passengers:   1,
-      }, guest);
-      return; // один тип уведомления за раз
-    }
-    // Полотенца
-    if (m.includes("полотенц") || m.includes("towel") || m.includes("рӯймол")) {
+async function handleScenario(
+  scenarioId:    string,
+  userMessage:   string,
+  quickResponse: string,
+  guest:         GuestCtx,
+  history:       Message[]
+): Promise<{ reply: string; updatedHistory: Message[] }> {
+
+  // Карта инструментов по ID сценария — явный вызов нужного инструмента
+  const toolMap: Record<string, () => Promise<void>> = {
+
+    "HK-001": async () => {
       await executeToolCall("create_housekeeping", {
         room_number: guest.roomNumber, task_type: "towels", priority: "normal",
+        description: "Гость запросил свежие полотенца",
       }, guest);
-      return;
-    }
-    // Фен
-    if (m.includes("фен") || m.includes("hairdryer")) {
+    },
+    "HK-002": async () => {
+      await executeToolCall("create_housekeeping", {
+        room_number: guest.roomNumber, task_type: "cleaning", priority: "normal",
+        description: "Гость запросил уборку номера",
+      }, guest);
+    },
+    "HK-003": async () => {
       await executeToolCall("create_housekeeping", {
         room_number: guest.roomNumber, task_type: "hairdryer", priority: "normal",
       }, guest);
-      return;
-    }
-    // Тапочки
-    if (m.includes("тапочк") || m.includes("slipper")) {
+    },
+    "HK-004": async () => {
       await executeToolCall("create_housekeeping", {
         room_number: guest.roomNumber, task_type: "slippers", priority: "normal",
       }, guest);
-      return;
+    },
+
+    "TX-001": async () => {
+      await executeToolCall("arrange_taxi", {
+        room_number:  guest.roomNumber,
+        destination:  "Аэропорт Душанбе",
+        pickup_time:  "уточнить у гостя",
+        taxi_type:    "airport_transfer",
+        passengers:   1,
+      }, guest);
+    },
+    "TX-002": async () => {
+      await executeToolCall("arrange_taxi", {
+        room_number:  guest.roomNumber,
+        destination:  "по городу",
+        pickup_time:  "сейчас",
+        taxi_type:    "standard",
+        passengers:   1,
+      }, guest);
+    },
+
+    "CO-001": async () => {
+      await executeToolCall("escalate_to_staff", {
+        room_number: guest.roomNumber,
+        reason:      "Запрос позднего выезда до 16:00",
+        priority:    "normal",
+        summary:     `Комната ${guest.roomNumber} просит поздний выезд`,
+      }, guest);
+    },
+    "CO-002": async () => {
+      await executeToolCall("escalate_to_staff", {
+        room_number: guest.roomNumber,
+        reason:      "Запрос продления проживания",
+        priority:    "normal",
+        summary:     `Комната ${guest.roomNumber} хочет продлить проживание`,
+      }, guest);
+    },
+
+    "CM-001": async () => {
+      await executeToolCall("escalate_to_staff", {
+        room_number: guest.roomNumber,
+        reason:      "Жалоба гостя на сервис",
+        priority:    "urgent",
+        summary:     `⚠️ Комната ${guest.roomNumber} недовольна сервисом`,
+      }, guest);
+    },
+    "CM-002": async () => {
+      await executeToolCall("escalate_to_staff", {
+        room_number: guest.roomNumber,
+        reason:      "Жалоба на шум от соседей",
+        priority:    "urgent",
+        summary:     `🔇 Комната ${guest.roomNumber} — шумные соседи`,
+      }, guest);
+    },
+
+    "EX-002": async () => {
+      await executeToolCall("escalate_to_staff", {
+        room_number: guest.roomNumber,
+        reason:      "Запрос экскурсии",
+        priority:    "normal",
+        summary:     `🏔 Комната ${guest.roomNumber} интересуется экскурсиями`,
+      }, guest);
+    },
+
+    // WK-001 (побудка) — инструмент не вызываем: нужно уточнить время у гостя
+  };
+
+  const toolFn = toolMap[scenarioId];
+  if (toolFn) {
+    try {
+      await toolFn();
+      console.log(`✅ Инструмент вызван для ${scenarioId}`);
+    } catch (err: any) {
+      console.error(`❌ Ошибка инструмента ${scenarioId}:`, err.message);
+      logger.error(`handleScenario tool error [${scenarioId}]`, { err: err.message, room: guest.roomNumber });
     }
-  } catch (e: any) {
-    logger.warn("fireScenarioActions error", { err: e.message });
   }
+
+  const now = new Date().toISOString();
+  const updatedHistory: Message[] = [
+    ...history,
+    { role: "user" as const,      content: userMessage,    time: now },
+    { role: "assistant" as const, content: quickResponse,  time: now },
+  ].slice(-40);
+
+  return { reply: quickResponse, updatedHistory };
 }
 
 // Groq использует OpenAI-совместимый API
@@ -150,18 +229,10 @@ export async function chat(
   guest:       GuestCtx
 ): Promise<{ reply: string; updatedHistory: Message[] }> {
 
-  // Проверяем датасет — если нашли готовый ответ, не тратим токены Groq
-  const scenarioHit = findScenario(userMessage, guest.language);
-  if (scenarioHit) {
-    // Шлём уведомление персоналу параллельно (fire & forget — не блокируем ответ)
-    fireScenarioActions(userMessage, guest).catch(() => {});
-
-    const now = new Date().toISOString();
-    const updatedHistory: Message[] = [
-      ...history,
-      { role: "user" as const,      content: userMessage, time: now },
-      { role: "assistant" as const, content: scenarioHit.reply, time: now },
-    ].slice(-20);
+  // Проверяем датасет — если нашли готовый ответ, вызываем инструмент и не тратим токены Groq
+  const scenario = findScenario(userMessage, guest.language);
+  if (scenario) {
+    const result = await handleScenario(scenario.id, userMessage, scenario.response, guest, history);
     incMessages();
     broadcastEvent("message", {
       sessionKey: guest.guestId,
@@ -170,11 +241,11 @@ export async function chat(
       language:   guest.language,
       guestName:  guest.guestName,
       userMessage,
-      botReply:   scenarioHit.reply,
-      time:       now,
+      botReply:   result.reply,
+      time:       new Date().toISOString(),
     });
-    logger.info(`✅ Датасет: ${scenarioHit.id} (экономия токенов)`, { room: guest.roomNumber });
-    return { reply: scenarioHit.reply, updatedHistory };
+    logger.info(`✅ Датасет: ${scenario.id} (экономия токенов)`, { room: guest.roomNumber });
+    return result;
   }
 
   const systemFull = buildSystem(guest);

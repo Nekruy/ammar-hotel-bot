@@ -42,6 +42,7 @@ export async function notifyStaff(
   const chatId = resolveId(rawId);
 
   logger.info(`📢 notifyStaff → ${channel} | env=${envKey} | raw="${rawId}" | resolved=${chatId}`);
+  console.log(`📢 Отправляю в ${channel}: chat=${chatId}`);
 
   if (!token) {
     logger.error("❌ STAFF_BOT_TOKEN не задан в .env!");
