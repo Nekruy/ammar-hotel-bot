@@ -1,0 +1,512 @@
+[
+  {
+    "id": 1,
+    "lang": "ru",
+    "category": "food_order",
+    "user": "Что у вас есть на завтрак?",
+    "intent": "menu_inquiry",
+    "expected_action": "get_restaurant_menu",
+    "note": "Завтрак 08:00–10:00, включён в стоимость"
+  },
+  {
+    "id": 2,
+    "lang": "ru",
+    "category": "food_order",
+    "user": "Хочу заказать что-нибудь поесть в номер",
+    "intent": "room_service_request",
+    "expected_action": "get_restaurant_menu → show menu → confirm → create_room_service",
+    "note": "Рум-сервис 07:00–23:00"
+  },
+  {
+    "id": 3,
+    "lang": "ru",
+    "category": "food_order",
+    "user": "Можно заказать чай и печенье?",
+    "intent": "room_service_request",
+    "expected_action": "get_restaurant_menu → confirm → create_room_service"
+  },
+  {
+    "id": 4,
+    "lang": "ru",
+    "category": "housekeeping",
+    "user": "Принесите, пожалуйста, чистые полотенца",
+    "intent": "housekeeping_towels",
+    "expected_action": "create_housekeeping immediately",
+    "note": "Приходим в течение 15 минут"
+  },
+  {
+    "id": 5,
+    "lang": "ru",
+    "category": "housekeeping",
+    "user": "Нужна уборка в номере",
+    "intent": "housekeeping_cleaning",
+    "expected_action": "ask preferred time → create_housekeeping"
+  },
+  {
+    "id": 6,
+    "lang": "ru",
+    "category": "housekeeping",
+    "user": "Можно принести дополнительные тапочки?",
+    "intent": "housekeeping_amenities",
+    "expected_action": "create_housekeeping immediately"
+  },
+  {
+    "id": 7,
+    "lang": "ru",
+    "category": "housekeeping",
+    "user": "Фен в номере не работает",
+    "intent": "technical_issue",
+    "expected_action": "create_housekeeping or escalate_to_staff"
+  },
+  {
+    "id": 8,
+    "lang": "ru",
+    "category": "taxi",
+    "user": "Вызовите такси в аэропорт",
+    "intent": "taxi_request",
+    "expected_action": "ask destination & time → confirm → arrange_taxi"
+  },
+  {
+    "id": 9,
+    "lang": "ru",
+    "category": "taxi",
+    "user": "Мне нужно такси завтра в 6 утра до центра",
+    "intent": "taxi_request",
+    "expected_action": "confirm details → arrange_taxi"
+  },
+  {
+    "id": 10,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "До скольки работает ресторан?",
+    "intent": "schedule_inquiry",
+    "expected_action": "answer from facts: 08:00–23:00"
+  },
+  {
+    "id": 11,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Когда нужно освободить номер?",
+    "intent": "checkout_inquiry",
+    "expected_action": "answer: 12:00, поздний выезд до 16:00 по запросу"
+  },
+  {
+    "id": 12,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Какой пароль от WiFi?",
+    "intent": "wifi_inquiry",
+    "expected_action": "answer: пароль на ресепшне и на карточке в номере"
+  },
+  {
+    "id": 13,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Есть ли парковка?",
+    "intent": "parking_inquiry",
+    "expected_action": "answer: бесплатная, 2 места"
+  },
+  {
+    "id": 14,
+    "lang": "ru",
+    "category": "spa_gym",
+    "user": "Когда открывается спа?",
+    "intent": "spa_inquiry",
+    "expected_action": "answer: 10:00–21:00"
+  },
+  {
+    "id": 15,
+    "lang": "ru",
+    "category": "spa_gym",
+    "user": "Есть ли тренажёрный зал?",
+    "intent": "gym_inquiry",
+    "expected_action": "answer: да, 06:00–22:00"
+  },
+  {
+    "id": 16,
+    "lang": "ru",
+    "category": "complaint",
+    "user": "В соседнем номере очень шумно, невозможно спать",
+    "intent": "noise_complaint",
+    "expected_action": "escalate_to_staff immediately"
+  },
+  {
+    "id": 17,
+    "lang": "ru",
+    "category": "complaint",
+    "user": "Кондиционер не работает",
+    "intent": "technical_complaint",
+    "expected_action": "escalate_to_staff"
+  },
+  {
+    "id": 18,
+    "lang": "ru",
+    "category": "city_guide",
+    "user": "Где поесть рядом с отелем?",
+    "intent": "restaurant_recommendation",
+    "expected_action": "get_city_info → answer: Сафо (2 мин), Плюк (10 мин), Набережная Бурак (10 мин)"
+  },
+  {
+    "id": 19,
+    "lang": "ru",
+    "category": "services",
+    "user": "Можно сдать вещи в стирку?",
+    "intent": "laundry_request",
+    "expected_action": "answer: да, услуга доступна → escalate_to_staff"
+  },
+  {
+    "id": 20,
+    "lang": "ru",
+    "category": "services",
+    "user": "Можно обменять доллары на сомони?",
+    "intent": "currency_exchange",
+    "expected_action": "answer: обмен валюты на ресепшне"
+  },
+  {
+    "id": 21,
+    "lang": "ru",
+    "category": "emergency",
+    "user": "Мне плохо, нужна помощь",
+    "intent": "medical_emergency",
+    "expected_action": "answer: скорая 103, ресепшн 1 — 24/7"
+  },
+  {
+    "id": 22,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Можно взять детскую кроватку?",
+    "intent": "baby_cot_request",
+    "expected_action": "answer: да, бесплатно → escalate_to_staff"
+  },
+  {
+    "id": 23,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Во сколько начинается заселение?",
+    "intent": "checkin_inquiry",
+    "expected_action": "answer: 14:00"
+  },
+  {
+    "id": 24,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Есть ли вегетарианские блюда?",
+    "intent": "dietary_inquiry",
+    "expected_action": "answer: да, вегетарианское меню есть"
+  },
+  {
+    "id": 25,
+    "lang": "ru",
+    "category": "hotel_info",
+    "user": "Сколько стоит номер на эту ночь?",
+    "intent": "room_price_inquiry",
+    "expected_action": "answer: стоимость уточните на ресепшне: 1"
+  },
+  {
+    "id": 26,
+    "lang": "tg",
+    "category": "food_order",
+    "user": "Хӯрок ба хона оварда мешавад?",
+    "intent": "room_service_inquiry",
+    "expected_action": "get_restaurant_menu → show menu → confirm → create_room_service",
+    "note": "Room service 07:00–23:00"
+  },
+  {
+    "id": 27,
+    "lang": "tg",
+    "category": "food_order",
+    "user": "Чой ва ширинӣ оварда дода мешавад?",
+    "intent": "room_service_request",
+    "expected_action": "get_restaurant_menu → confirm → create_room_service"
+  },
+  {
+    "id": 28,
+    "lang": "tg",
+    "category": "housekeeping",
+    "user": "Ба ман рӯймол оварда дода мешавад?",
+    "intent": "housekeeping_towels",
+    "expected_action": "create_housekeeping immediately"
+  },
+  {
+    "id": 29,
+    "lang": "tg",
+    "category": "housekeeping",
+    "user": "Дар хона тозакорӣ лозим аст",
+    "intent": "housekeeping_cleaning",
+    "expected_action": "ask preferred time → create_housekeeping"
+  },
+  {
+    "id": 30,
+    "lang": "tg",
+    "category": "taxi",
+    "user": "Ба фурудгоҳ такси лозим аст",
+    "intent": "taxi_request",
+    "expected_action": "ask time → confirm → arrange_taxi"
+  },
+  {
+    "id": 31,
+    "lang": "tg",
+    "category": "hotel_info",
+    "user": "Ресторан то соати чанд кор мекунад?",
+    "intent": "schedule_inquiry",
+    "expected_action": "answer: 08:00–23:00"
+  },
+  {
+    "id": 32,
+    "lang": "tg",
+    "category": "hotel_info",
+    "user": "Рамзи WiFi чист?",
+    "intent": "wifi_inquiry",
+    "expected_action": "answer: дар ресепшн ва дар корти хона"
+  },
+  {
+    "id": 33,
+    "lang": "tg",
+    "category": "hotel_info",
+    "user": "Хуруҷ аз хона то соати чанд?",
+    "intent": "checkout_inquiry",
+    "expected_action": "answer: 12:00, дер хуруҷ то 16:00 бо дархост"
+  },
+  {
+    "id": 34,
+    "lang": "tg",
+    "category": "spa_gym",
+    "user": "Спа кай кор мекунад?",
+    "intent": "spa_inquiry",
+    "expected_action": "answer: 10:00–21:00"
+  },
+  {
+    "id": 35,
+    "lang": "tg",
+    "category": "complaint",
+    "user": "Дар хонаи ҳамсоя садои баланд аст",
+    "intent": "noise_complaint",
+    "expected_action": "escalate_to_staff immediately"
+  },
+  {
+    "id": 36,
+    "lang": "tg",
+    "category": "city_guide",
+    "user": "Наздики меҳмонхона куҷо хӯрок хӯрдан мешавад?",
+    "intent": "restaurant_recommendation",
+    "expected_action": "get_city_info → Сафо (2 дақ), Плюк, Набережная Бурак"
+  },
+  {
+    "id": 37,
+    "lang": "tg",
+    "category": "emergency",
+    "user": "Ёрӣ лозим аст, ҳолам бад аст",
+    "intent": "medical_emergency",
+    "expected_action": "answer: ёрии таъҷилӣ 103, ресепшн 1"
+  },
+  {
+    "id": 38,
+    "lang": "tg",
+    "category": "services",
+    "user": "Пул иваз карда мешавад?",
+    "intent": "currency_exchange",
+    "expected_action": "answer: дар ресепшн"
+  },
+  {
+    "id": 39,
+    "lang": "en",
+    "category": "food_order",
+    "user": "Can I order food to my room?",
+    "intent": "room_service_request",
+    "expected_action": "get_restaurant_menu → show menu → confirm → create_room_service",
+    "note": "Room service 07:00–23:00"
+  },
+  {
+    "id": 40,
+    "lang": "en",
+    "category": "food_order",
+    "user": "What time does breakfast start?",
+    "intent": "breakfast_inquiry",
+    "expected_action": "answer: 08:00–10:00, included in room rate"
+  },
+  {
+    "id": 41,
+    "lang": "en",
+    "category": "housekeeping",
+    "user": "Please bring extra towels",
+    "intent": "housekeeping_towels",
+    "expected_action": "create_housekeeping immediately"
+  },
+  {
+    "id": 42,
+    "lang": "en",
+    "category": "taxi",
+    "user": "I need a taxi to the airport at 5am",
+    "intent": "taxi_request",
+    "expected_action": "confirm details → arrange_taxi"
+  },
+  {
+    "id": 43,
+    "lang": "en",
+    "category": "hotel_info",
+    "user": "What is the WiFi password?",
+    "intent": "wifi_inquiry",
+    "expected_action": "answer: at reception and on card in room"
+  },
+  {
+    "id": 44,
+    "lang": "en",
+    "category": "hotel_info",
+    "user": "What time is checkout?",
+    "intent": "checkout_inquiry",
+    "expected_action": "answer: 12:00, late checkout until 16:00 on request"
+  },
+  {
+    "id": 45,
+    "lang": "en",
+    "category": "hotel_info",
+    "user": "Is parking available?",
+    "intent": "parking_inquiry",
+    "expected_action": "answer: yes, free, 2 spots"
+  },
+  {
+    "id": 46,
+    "lang": "en",
+    "category": "spa_gym",
+    "user": "When does the spa open?",
+    "intent": "spa_inquiry",
+    "expected_action": "answer: 10:00–21:00"
+  },
+  {
+    "id": 47,
+    "lang": "en",
+    "category": "complaint",
+    "user": "The air conditioning is not working",
+    "intent": "technical_complaint",
+    "expected_action": "escalate_to_staff"
+  },
+  {
+    "id": 48,
+    "lang": "en",
+    "category": "city_guide",
+    "user": "What restaurants are near the hotel?",
+    "intent": "restaurant_recommendation",
+    "expected_action": "get_city_info → Safo (2 min walk), Plyuk, Naberezhnaya Burak (10 min)"
+  },
+  {
+    "id": 49,
+    "lang": "en",
+    "category": "emergency",
+    "user": "There is a fire alarm going off",
+    "intent": "fire_emergency",
+    "expected_action": "answer: fire: 101, reception 24/7: 1"
+  },
+  {
+    "id": 50,
+    "lang": "en",
+    "category": "services",
+    "user": "Do you have laundry service?",
+    "intent": "laundry_inquiry",
+    "expected_action": "answer: yes → escalate_to_staff for pickup"
+  },
+  {
+    "id": 51,
+    "lang": "zh",
+    "category": "food_order",
+    "user": "我可以叫客房送餐服务吗？",
+    "intent": "room_service_request",
+    "expected_action": "get_restaurant_menu → show menu → confirm → create_room_service",
+    "note": "客房送餐 07:00–23:00"
+  },
+  {
+    "id": 52,
+    "lang": "zh",
+    "category": "food_order",
+    "user": "早餐几点开始？",
+    "intent": "breakfast_inquiry",
+    "expected_action": "answer: 08:00–10:00，含在房价内"
+  },
+  {
+    "id": 53,
+    "lang": "zh",
+    "category": "housekeeping",
+    "user": "请帮我送一些毛巾过来",
+    "intent": "housekeeping_towels",
+    "expected_action": "create_housekeeping immediately"
+  },
+  {
+    "id": 54,
+    "lang": "zh",
+    "category": "housekeeping",
+    "user": "我的房间需要打扫",
+    "intent": "housekeeping_cleaning",
+    "expected_action": "ask preferred time → create_housekeeping"
+  },
+  {
+    "id": 55,
+    "lang": "zh",
+    "category": "taxi",
+    "user": "我明天早上5点需要一辆去机场的出租车",
+    "intent": "taxi_request",
+    "expected_action": "confirm details → arrange_taxi"
+  },
+  {
+    "id": 56,
+    "lang": "zh",
+    "category": "hotel_info",
+    "user": "WiFi密码是多少？",
+    "intent": "wifi_inquiry",
+    "expected_action": "answer: 密码在前台和房间卡上"
+  },
+  {
+    "id": 57,
+    "lang": "zh",
+    "category": "hotel_info",
+    "user": "几点需要退房？",
+    "intent": "checkout_inquiry",
+    "expected_action": "answer: 12:00，延迟退房至16:00需提前申请"
+  },
+  {
+    "id": 58,
+    "lang": "zh",
+    "category": "hotel_info",
+    "user": "有停车场吗？",
+    "intent": "parking_inquiry",
+    "expected_action": "answer: 有，免费，2个车位"
+  },
+  {
+    "id": 59,
+    "lang": "zh",
+    "category": "spa_gym",
+    "user": "水疗中心什么时候开放？",
+    "intent": "spa_inquiry",
+    "expected_action": "answer: 10:00–21:00"
+  },
+  {
+    "id": 60,
+    "lang": "zh",
+    "category": "complaint",
+    "user": "隔壁房间太吵了，我没办法睡觉",
+    "intent": "noise_complaint",
+    "expected_action": "escalate_to_staff immediately"
+  },
+  {
+    "id": 61,
+    "lang": "zh",
+    "category": "city_guide",
+    "user": "酒店附近有什么好吃的餐厅？",
+    "intent": "restaurant_recommendation",
+    "expected_action": "get_city_info → Сафо (步行2分钟), Плюк, Набережная Бурак (10分钟)"
+  },
+  {
+    "id": 62,
+    "lang": "zh",
+    "category": "emergency",
+    "user": "我需要帮助，我感觉不舒服",
+    "intent": "medical_emergency",
+    "expected_action": "answer: 急救电话 103，前台 1 全天候"
+  },
+  {
+    "id": 63,
+    "lang": "zh",
+    "category": "services",
+    "user": "可以换钱吗？",
+    "intent": "currency_exchange",
+    "expected_action": "answer: 可以在前台兑换"
+  }
+]
