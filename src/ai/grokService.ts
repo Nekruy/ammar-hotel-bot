@@ -25,12 +25,34 @@ function findScenario(message: string, language: string): { id: string; response
     const { scenarios = [] } = JSON.parse(raw);
     const msg  = message.toLowerCase().trim();
     const lang = LANG_KEY[language] || "ru";
+
+    // Проход 1: точное совпадение с границей слова (приоритет)
     for (const sc of scenarios) {
       const triggers: string[] = sc.triggers || [];
-      if (triggers.some((t: string) => msg.includes(t.toLowerCase()))) {
+      const exact = triggers.some(t => {
+        const tr = t.toLowerCase();
+        return msg === tr ||
+               msg.includes(" " + tr + " ") ||
+               msg.startsWith(tr + " ") ||
+               msg.endsWith(" " + tr);
+      });
+      if (exact) {
         const response = sc.responses?.[lang];
         if (response) {
-          console.log(`📋 Датасет найден: ${sc.id}`);
+          console.log(`📋 Датасет найден (точно): ${sc.id}`);
+          return { id: sc.id as string, response };
+        }
+      }
+    }
+
+    // Проход 2: частичное вхождение
+    for (const sc of scenarios) {
+      const triggers: string[] = sc.triggers || [];
+      const partial = triggers.some(t => msg.includes(t.toLowerCase()));
+      if (partial) {
+        const response = sc.responses?.[lang];
+        if (response) {
+          console.log(`📋 Датасет найден (частично): ${sc.id}`);
           return { id: sc.id as string, response };
         }
       }
