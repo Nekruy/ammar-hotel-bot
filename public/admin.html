@@ -20,6 +20,7 @@
   --red:    #e05555;
   --yellow: #f0b429;
   --border: rgba(196,160,96,.18);
+  --sidebar-w: 220px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -32,7 +33,7 @@ body {
   flex-direction: column;
 }
 
-/* ═══ LOGIN ═══════════════════════════════════════════════════════ */
+/* ─── LOGIN ───────────────────────────────────────────── */
 #login-screen {
   position: fixed; inset: 0;
   background: var(--bg);
@@ -48,15 +49,8 @@ body {
   text-align: center;
   box-shadow: 0 20px 60px rgba(0,0,0,.5);
 }
-.login-logo {
-  font-size: 2.4rem; font-weight: 700;
-  color: var(--gold); letter-spacing: 3px;
-  margin-bottom: 4px;
-}
-.login-sub {
-  color: var(--muted); font-size: .82rem;
-  margin-bottom: 32px;
-}
+.login-logo { font-size: 2.4rem; font-weight: 700; color: var(--gold); letter-spacing: 3px; margin-bottom: 4px; }
+.login-sub  { color: var(--muted); font-size: .82rem; margin-bottom: 32px; }
 .login-wrap input[type=password] {
   width: 100%; padding: 13px 16px;
   background: var(--bg3); border: 1px solid var(--border);
@@ -65,350 +59,604 @@ body {
   transition: border-color .2s;
 }
 .login-wrap input:focus { border-color: var(--gold); }
-.login-wrap button {
+.login-wrap .btn-primary {
   width: 100%; padding: 14px;
   background: var(--gold); color: var(--bg);
   font-weight: 700; font-size: 1rem; font-family: inherit;
   border: none; border-radius: 10px; cursor: pointer;
   transition: background .2s;
 }
-.login-wrap button:hover { background: var(--gold2); }
-.login-err {
-  color: var(--red); font-size: .83rem;
-  margin-top: 12px; display: none;
-}
+.login-wrap .btn-primary:hover { background: var(--gold2); }
+.login-err { color: var(--red); font-size: .83rem; margin-top: 12px; display: none; }
 
-/* ═══ ADMIN PANEL ═════════════════════════════════════════════════ */
+/* ─── ADMIN LAYOUT ────────────────────────────────────── */
 #admin-panel {
   display: none;
-  flex-direction: column;
   height: 100vh;
+  flex-direction: row;
 }
 
-/* Header */
-.header {
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  height: 56px; padding: 0 20px;
-  display: flex; align-items: center; gap: 14px;
-  flex-shrink: 0;
-}
-.h-logo { font-size: 1.25rem; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
-.h-sep  { color: var(--border); }
-.h-title { font-size: .82rem; color: var(--muted); }
-.h-space { flex: 1; }
-.h-status {
-  display: flex; align-items: center; gap: 7px;
-  font-size: .78rem; color: var(--muted);
-}
-.h-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--yellow);
-  transition: background .4s;
-}
-.h-dot.online  { background: var(--green); }
-.h-dot.offline { background: var(--red); }
-.h-logout {
-  background: none; border: 1px solid var(--border);
-  color: var(--muted); padding: 5px 13px; border-radius: 7px;
-  font-size: .78rem; font-family: inherit; cursor: pointer;
-  transition: all .2s;
-}
-.h-logout:hover { border-color: var(--gold); color: var(--gold); }
-
-/* Stats row */
-.stats {
-  display: flex; gap: 12px;
-  padding: 12px 16px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.stat {
-  flex: 1; background: var(--card);
-  border: 1px solid var(--border); border-radius: 10px;
-  padding: 10px 14px;
-}
-.stat-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
-.stat-val   { font-size: 1.6rem; font-weight: 700; color: var(--gold); line-height: 1.15; }
-.stat-sub   { font-size: .7rem; color: var(--muted); }
-
-/* Body split */
-.split {
-  flex: 1; display: flex; overflow: hidden;
-}
-
-/* ═══ SIDEBAR ═════════════════════════════════════════════════════ */
-.sidebar {
-  width: 300px; min-width: 300px;
+/* ─── SIDEBAR NAV ─────────────────────────────────────── */
+.sidenav {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
   background: var(--bg2);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
-  overflow: hidden;
+  height: 100vh;
+  flex-shrink: 0;
 }
-.sb-head {
-  padding: 10px 14px 8px;
+.sidenav-logo {
+  padding: 18px 20px 14px;
   border-bottom: 1px solid var(--border);
 }
-.sb-search {
+.logo-name  { font-size: 1.3rem; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+.logo-sub   { font-size: .68rem; color: var(--muted); }
+.sidenav-menu { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px;
+  cursor: pointer; font-size: .84rem; color: var(--muted);
+  transition: all .15s; user-select: none;
+}
+.nav-item:hover  { background: rgba(196,160,96,.08); color: var(--text); }
+.nav-item.active { background: rgba(196,160,96,.13); color: var(--gold); font-weight: 600; }
+.nav-icon { font-size: 1.05rem; width: 20px; text-align: center; flex-shrink: 0; }
+.sidenav-foot {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border);
+}
+.conn-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; font-size: .74rem; color: var(--muted);
+}
+.conn-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--yellow); flex-shrink: 0;
+}
+.conn-dot.online  { background: var(--green); }
+.conn-dot.offline { background: var(--red); }
+.btn-logout {
+  width: 100%; margin-top: 6px;
+  padding: 9px 12px; border-radius: 9px;
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: .8rem; font-family: inherit;
+  cursor: pointer; transition: all .15s;
+}
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+/* ─── MAIN CONTENT ────────────────────────────────────── */
+.main-content {
+  flex: 1; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.panel { display: none; flex: 1; flex-direction: column; overflow: hidden; height: 100%; }
+.panel.active { display: flex; }
+
+/* ─── PANEL HEADER ────────────────────────────────────── */
+.panel-hd {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 22px;
+  display: flex; align-items: center; gap: 12px;
+  flex-shrink: 0;
+}
+.panel-hd h2 { font-size: 1rem; font-weight: 600; }
+.panel-hd-sub { font-size: .76rem; color: var(--muted); }
+.hd-space { flex: 1; }
+
+/* ─── DASHBOARD ───────────────────────────────────────── */
+.dash-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.stat-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+}
+.stat-card-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.stat-card-val   { font-size: 2rem; font-weight: 700; color: var(--gold); line-height: 1; }
+.stat-card-sub   { font-size: .7rem; color: var(--muted); margin-top: 4px; }
+.section-title { font-size: .8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+.guest-table {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+}
+.gt-row {
+  display: grid; grid-template-columns: 70px 60px 50px 1fr 100px 60px 80px;
+  align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  font-size: .8rem;
+}
+.gt-row.hd {
+  font-size: .68rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .5px;
+  background: var(--bg3);
+}
+.gt-row:last-child { border-bottom: none; }
+.gt-row:not(.hd):hover { background: rgba(196,160,96,.04); }
+.gt-room { font-weight: 700; color: var(--gold); }
+.tag {
+  display: inline-block; font-size: .62rem; font-weight: 600;
+  padding: 2px 7px; border-radius: 5px;
+}
+.tag.tg  { background: rgba(34,139,230,.18); color: #6ab8f0; }
+.tag.web { background: rgba(196,160,96,.15); color: var(--gold); }
+.tag.wa  { background: rgba(76,175,61,.15);  color: #5cb85c; }
+.online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.online-dot.on { background: var(--green); }
+.gt-msg { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.btn-sm {
+  padding: 5px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: none;
+  color: var(--muted); font-size: .72rem; font-family: inherit;
+  cursor: pointer; transition: all .15s;
+}
+.btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+.dash-empty { padding: 36px; text-align: center; color: var(--muted); font-size: .84rem; }
+
+/* ─── DIALOGS ─────────────────────────────────────────── */
+.dialogs-body { flex: 1; display: flex; overflow: hidden; }
+.dlg-sidebar {
+  width: 280px; min-width: 280px;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.dlg-sidebar-hd { padding: 10px 12px 8px; border-bottom: 1px solid var(--border); }
+.search-input {
   width: 100%; padding: 8px 12px;
   background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 8px; color: var(--text); font-size: .84rem;
-  font-family: inherit; outline: none;
+  border-radius: 8px; color: var(--text); font-size: .82rem;
+  font-family: inherit; outline: none; transition: border-color .2s;
 }
-.sb-search:focus { border-color: var(--gold); }
-.sb-count {
-  font-size: .72rem; color: var(--muted);
-  margin-top: 6px; padding: 0 2px;
-}
-.sb-list {
-  flex: 1; overflow-y: auto;
-}
-.sb-list::-webkit-scrollbar { width: 4px; }
-.sb-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
+.search-input:focus { border-color: var(--gold); }
+.dlg-count { font-size: .7rem; color: var(--muted); margin-top: 5px; padding: 0 2px; }
+.dlg-list { flex: 1; overflow-y: auto; }
+.dlg-list::-webkit-scrollbar { width: 3px; }
+.dlg-list::-webkit-scrollbar-thumb { background: var(--border); }
 .guest-row {
   padding: 10px 14px;
   border-bottom: 1px solid rgba(255,255,255,.04);
-  cursor: pointer;
-  transition: background .15s;
+  cursor: pointer; transition: background .12s;
 }
-.guest-row:hover { background: rgba(196,160,96,.06); }
-.guest-row.active {
-  background: rgba(196,160,96,.1);
-  border-left: 3px solid var(--gold);
-}
-.gr-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-.gr-room { font-weight: 700; font-size: .88rem; color: var(--gold); }
-.gr-tag {
-  font-size: .65rem; color: var(--muted);
-  background: rgba(255,255,255,.07);
-  padding: 1px 5px; border-radius: 4px;
-}
-.gr-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--muted); margin-left: auto;
-}
+.guest-row:hover  { background: rgba(196,160,96,.06); }
+.guest-row.active { background: rgba(196,160,96,.1); border-left: 3px solid var(--gold); }
+.gr-top  { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+.gr-room { font-weight: 700; font-size: .86rem; color: var(--gold); }
+.gr-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-left: auto; }
 .gr-dot.on { background: var(--green); }
-.gr-msg {
-  font-size: .76rem; color: var(--muted);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.gr-time { font-size: .65rem; color: var(--muted); margin-top: 2px; }
-.sb-empty {
-  padding: 36px 14px; text-align: center;
-  color: var(--muted); font-size: .84rem; line-height: 1.8;
-}
-.sb-empty-icon { font-size: 2rem; opacity: .3; margin-bottom: 8px; }
+.gr-msg  { font-size: .74rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gr-time { font-size: .63rem; color: var(--muted); margin-top: 1px; }
+.dlg-empty { padding: 30px; text-align: center; color: var(--muted); font-size: .82rem; line-height: 1.8; }
 
-/* ═══ CHAT AREA ═══════════════════════════════════════════════════ */
-.chat-area {
-  flex: 1; display: flex; flex-direction: column; overflow: hidden;
-}
-.chat-empty {
+.chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.chat-placeholder {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  color: var(--muted); gap: 10px;
+  color: var(--muted); gap: 8px;
 }
-.chat-empty-icon { font-size: 3.5rem; opacity: .2; }
-.chat-empty-txt  { font-size: .88rem; }
-
+.chat-placeholder-icon { font-size: 3rem; opacity: .2; }
 .chat-hd {
-  padding: 11px 18px;
-  background: var(--card);
+  padding: 11px 18px; background: var(--card);
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 10px;
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
 }
 .chat-hd-av {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 34px; height: 34px; border-radius: 50%;
   background: var(--bg3); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: .95rem;
 }
-.chat-hd-room { font-weight: 700; font-size: .98rem; }
-.chat-hd-info { font-size: .74rem; color: var(--muted); }
-.chat-hd-sp   { flex: 1; }
-.platform-badge {
-  font-size: .68rem; font-weight: 600;
-  padding: 3px 9px; border-radius: 6px;
-}
-.platform-badge.tg  { background: rgba(34,139,230,.18); color: #6ab8f0; }
-.platform-badge.web { background: rgba(196,160,96,.15); color: var(--gold); }
-.platform-badge.wa  { background: rgba(76,175,61,.15);  color: #5cb85c; }
-
+.chat-hd-room { font-weight: 700; font-size: .95rem; }
+.chat-hd-info { font-size: .72rem; color: var(--muted); }
 .messages {
-  flex: 1; overflow-y: auto;
-  padding: 14px 18px;
+  flex: 1; overflow-y: auto; padding: 14px 18px;
   display: flex; flex-direction: column; gap: 10px;
 }
-.messages::-webkit-scrollbar { width: 4px; }
-.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.msg { display: flex; flex-direction: column; max-width: 74%; }
+.messages::-webkit-scrollbar { width: 3px; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); }
+.msg { display: flex; flex-direction: column; max-width: 72%; }
 .msg.user      { align-self: flex-end;   align-items: flex-end; }
 .msg.assistant { align-self: flex-start; align-items: flex-start; }
-.msg.system    { align-self: center;     align-items: center; max-width: 90%; }
-.msg-who { font-size: .68rem; color: var(--muted); margin-bottom: 3px; padding: 0 4px; }
-.msg-bubble {
-  padding: 9px 13px; border-radius: 14px;
-  font-size: .86rem; line-height: 1.55;
-  white-space: pre-wrap; word-break: break-word;
-}
-.msg.user .msg-bubble {
-  background: var(--gold); color: var(--bg);
-  border-bottom-right-radius: 4px;
-}
-.msg.assistant .msg-bubble {
-  background: var(--card); border: 1px solid var(--border);
-  border-bottom-left-radius: 4px;
-}
-.msg.system .msg-bubble {
-  background: rgba(196,160,96,.07);
-  border: 1px dashed var(--border);
-  color: var(--muted); font-size: .76rem;
-  border-radius: 8px; text-align: center;
-}
-.msg-ts { font-size: .62rem; color: var(--muted); margin-top: 3px; padding: 0 4px; }
-
-/* Send bar */
+.msg-who    { font-size: .66rem; color: var(--muted); margin-bottom: 2px; padding: 0 4px; }
+.msg-bubble { padding: 9px 13px; border-radius: 14px; font-size: .84rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.msg.user .msg-bubble      { background: var(--gold); color: var(--bg); border-bottom-right-radius: 4px; }
+.msg.assistant .msg-bubble { background: var(--card); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg-ts { font-size: .6rem; color: var(--muted); margin-top: 2px; padding: 0 4px; }
 .send-bar {
-  padding: 10px 14px;
-  background: var(--card);
+  padding: 10px 14px; background: var(--card);
   border-top: 1px solid var(--border);
-  display: flex; gap: 8px; align-items: flex-end;
-  flex-shrink: 0;
+  display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0;
 }
 .send-bar textarea {
-  flex: 1; background: var(--bg3);
-  border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); font-size: .88rem;
-  padding: 9px 13px; outline: none; resize: none;
-  max-height: 90px; font-family: inherit; line-height: 1.4;
-  transition: border-color .2s;
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-size: .86rem;
+  padding: 9px 13px; outline: none; resize: none; max-height: 90px;
+  font-family: inherit; line-height: 1.4; transition: border-color .2s;
 }
 .send-bar textarea:focus { border-color: var(--gold); }
 .send-btn {
-  width: 40px; height: 40px; border-radius: 10px;
-  background: var(--gold); border: none;
-  color: var(--bg); font-size: 1rem;
-  cursor: pointer; transition: background .2s; flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 9px;
+  background: var(--gold); border: none; color: var(--bg);
+  font-size: .95rem; cursor: pointer; transition: background .2s; flex-shrink: 0;
 }
 .send-btn:hover    { background: var(--gold2); }
 .send-btn:disabled { background: var(--muted); cursor: default; }
-.send-note {
-  padding: 8px 14px;
-  font-size: .74rem; color: var(--muted);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
 
-/* Toast */
+/* ─── HOTEL INFO ──────────────────────────────────────── */
+.form-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+  max-width: 900px;
+}
+.form-grid.full { grid-template-columns: 1fr; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.field input, .field textarea, .field select {
+  padding: 9px 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: .86rem;
+  font-family: inherit; outline: none; transition: border-color .2s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--gold); }
+.field textarea { resize: vertical; min-height: 70px; }
+.form-section-title {
+  font-size: .72rem; font-weight: 600; color: var(--gold);
+  text-transform: uppercase; letter-spacing: .5px;
+  grid-column: 1 / -1; padding-top: 8px;
+  border-top: 1px solid var(--border); margin-top: 6px;
+}
+.form-section-title:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+.btn-save {
+  margin-top: 16px;
+  padding: 11px 28px; border-radius: 9px;
+  background: var(--gold); color: var(--bg);
+  font-weight: 700; font-size: .9rem; font-family: inherit;
+  border: none; cursor: pointer; transition: background .2s;
+}
+.btn-save:hover { background: var(--gold2); }
+.btn-outline {
+  padding: 9px 20px; border-radius: 9px;
+  background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: .84rem; font-family: inherit;
+  cursor: pointer; transition: all .15s;
+}
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ─── MENU ────────────────────────────────────────────── */
+.menu-body { flex: 1; overflow-y: auto; padding: 18px 22px; }
+.tabs-row {
+  display: flex; gap: 4px; margin-bottom: 18px;
+  border-bottom: 1px solid var(--border); padding-bottom: 0;
+}
+.tab-btn {
+  padding: 8px 18px; border-radius: 8px 8px 0 0;
+  background: none; border: none;
+  color: var(--muted); font-size: .84rem; font-family: inherit;
+  cursor: pointer; transition: all .15s;
+  border: 1px solid transparent; border-bottom: none;
+  position: relative; bottom: -1px;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { background: var(--card); border-color: var(--border); color: var(--gold); font-weight: 600; }
+.menu-cat { display: none; }
+.menu-cat.active { display: block; }
+.menu-items { display: flex; flex-direction: column; gap: 8px; max-width: 600px; }
+.menu-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 9px; padding: 10px 14px;
+}
+.menu-item input {
+  background: transparent; border: none; outline: none;
+  color: var(--text); font-size: .86rem; font-family: inherit;
+}
+.menu-item .mi-name { flex: 1; }
+.menu-item .mi-price { width: 100px; text-align: right; color: var(--gold); }
+.btn-del {
+  background: none; border: none;
+  color: var(--muted); cursor: pointer; font-size: .85rem;
+  padding: 4px 6px; border-radius: 5px;
+  transition: all .12s;
+}
+.btn-del:hover { color: var(--red); background: rgba(224,85,85,.1); }
+.add-item-row { display: flex; gap: 8px; max-width: 600px; margin-top: 10px; }
+.add-item-row input {
+  padding: 9px 12px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: .84rem;
+  font-family: inherit; outline: none;
+}
+.add-item-row input:first-child { flex: 1; }
+.add-item-row input:last-of-type { width: 110px; }
+.btn-add-item {
+  padding: 9px 16px; border-radius: 8px;
+  background: var(--bg3); border: 1px dashed var(--border);
+  color: var(--muted); font-size: .82rem; font-family: inherit;
+  cursor: pointer; white-space: nowrap; transition: all .15s;
+}
+.btn-add-item:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ─── BOT PROMPT ──────────────────────────────────────── */
+.prompt-body { flex: 1; display: flex; gap: 0; overflow: hidden; }
+.prompt-left {
+  flex: 1; display: flex; flex-direction: column;
+  border-right: 1px solid var(--border); overflow: hidden;
+}
+.prompt-right { width: 360px; display: flex; flex-direction: column; overflow: hidden; }
+.prompt-sub-hd {
+  padding: 10px 16px; font-size: .72rem; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .4px;
+  border-bottom: 1px solid var(--border); background: var(--bg2);
+  display: flex; align-items: center; gap: 8px;
+}
+.prompt-sub-hd .hd-space { flex: 1; }
+.prompt-textarea {
+  flex: 1; padding: 14px 16px;
+  background: var(--bg3); border: none; outline: none;
+  color: var(--text); font-size: .8rem; font-family: monospace;
+  line-height: 1.7; resize: none;
+}
+.prompt-actions { padding: 10px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+.test-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.test-msgs { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.test-input-row {
+  padding: 10px 14px; border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: center;
+}
+.test-input-row input {
+  flex: 1; padding: 9px 12px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); font-size: .84rem;
+  font-family: inherit; outline: none; transition: border-color .2s;
+}
+.test-input-row input:focus { border-color: var(--gold); }
+.test-bubble-user {
+  align-self: flex-end; background: var(--gold); color: var(--bg);
+  padding: 8px 12px; border-radius: 12px 12px 4px 12px;
+  font-size: .82rem; max-width: 85%; line-height: 1.4;
+}
+.test-bubble-bot {
+  align-self: flex-start; background: var(--card); border: 1px solid var(--border);
+  padding: 8px 12px; border-radius: 12px 12px 12px 4px;
+  font-size: .82rem; max-width: 85%; line-height: 1.4; white-space: pre-wrap;
+}
+.test-spinner { color: var(--muted); font-size: .8rem; align-self: flex-start; }
+
+/* ─── TOAST ───────────────────────────────────────────── */
 #toast {
   position: fixed; bottom: 22px; right: 22px;
   background: var(--card); border: 1px solid var(--gold);
-  color: var(--text); padding: 11px 16px; border-radius: 10px;
-  font-size: .83rem; box-shadow: 0 6px 24px rgba(0,0,0,.4);
-  transform: translateY(16px); opacity: 0;
-  transition: all .28s; pointer-events: none; z-index: 600;
+  color: var(--text); padding: 10px 16px; border-radius: 10px;
+  font-size: .82rem; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  transform: translateY(14px); opacity: 0;
+  transition: all .25s; pointer-events: none; z-index: 600;
 }
 #toast.show { transform: translateY(0); opacity: 1; }
 
-/* Scrollbar global */
-::-webkit-scrollbar { width: 4px; }
+/* ─── SCROLLBARS ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(196,160,96,.2); border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<!-- ══════════ LOGIN SCREEN ══════════════════════════════════════ -->
+<!-- ════════ LOGIN ════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-wrap">
     <div class="login-logo">AMMAR</div>
     <div class="login-sub">Grand Hotel · Панель управления</div>
     <input type="password" id="password" placeholder="Введите пароль" autocomplete="current-password">
-    <button onclick="doLogin()">Войти</button>
+    <button class="btn-primary" onclick="doLogin()">Войти</button>
     <div class="login-err" id="login-err">Неверный пароль</div>
   </div>
 </div>
 
-<!-- ══════════ ADMIN PANEL ═══════════════════════════════════════ -->
+<!-- ════════ ADMIN PANEL ══════════════════════════════════ -->
 <div id="admin-panel">
 
-  <!-- Header -->
-  <div class="header">
-    <span class="h-logo">AMMAR</span>
-    <span class="h-sep">|</span>
-    <span class="h-title">Admin Panel</span>
-    <div class="h-space"></div>
-    <div class="h-status">
-      <div class="h-dot" id="conn-dot"></div>
-      <span id="conn-label">Подключение…</span>
+  <!-- Sidebar -->
+  <nav class="sidenav">
+    <div class="sidenav-logo">
+      <div class="logo-name">AMMAR</div>
+      <div class="logo-sub">Admin Panel</div>
     </div>
-    <button class="h-logout" onclick="doLogout()">Выйти</button>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-label">👥 Гостей онлайн</div>
-      <div class="stat-val" id="s-online">—</div>
-      <div class="stat-sub">сейчас активны</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">💬 Сообщений</div>
-      <div class="stat-val" id="s-msgs">—</div>
-      <div class="stat-sub">сегодня</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">🍽 Заказов</div>
-      <div class="stat-val" id="s-orders">—</div>
-      <div class="stat-sub">room service</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">🚨 Эскалаций</div>
-      <div class="stat-val" id="s-esc">—</div>
-      <div class="stat-sub">к персоналу</div>
-    </div>
-  </div>
-
-  <!-- Split -->
-  <div class="split">
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="sb-head">
-        <input class="sb-search" type="text" placeholder="🔍 Поиск гостя..." oninput="filterGuests(this.value)">
-        <div class="sb-count" id="sb-count">Загрузка…</div>
+    <div class="sidenav-menu">
+      <div class="nav-item active" data-tab="dash">
+        <span class="nav-icon">📊</span> Дашборд
       </div>
-      <div class="sb-list" id="guest-list">
-        <div class="sb-empty">
-          <div class="sb-empty-icon">🏨</div>
-          Нет активных гостей
+      <div class="nav-item" data-tab="dialogs">
+        <span class="nav-icon">💬</span> Диалоги
+      </div>
+      <div class="nav-item" data-tab="hotel">
+        <span class="nav-icon">🏨</span> Отель
+      </div>
+      <div class="nav-item" data-tab="menu">
+        <span class="nav-icon">🍽</span> Меню
+      </div>
+      <div class="nav-item" data-tab="prompt">
+        <span class="nav-icon">🤖</span> Бот/Промпт
+      </div>
+    </div>
+    <div class="sidenav-foot">
+      <div class="conn-row">
+        <div class="conn-dot" id="conn-dot"></div>
+        <span id="conn-label">Подключение…</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Выйти</button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- ── PANEL 1: DASHBOARD ── -->
+    <div class="panel active" id="panel-dash">
+      <div class="panel-hd">
+        <span>📊</span>
+        <div>
+          <div class="panel-hd h2" style="font-size:.98rem;font-weight:600;">Дашборд</div>
+          <div class="panel-hd-sub" id="dash-date">—</div>
+        </div>
+        <div class="hd-space"></div>
+        <button class="btn-outline" onclick="loadData()">↻ Обновить</button>
+      </div>
+      <div class="dash-body">
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-card-label">👥 Гостей онлайн</div>
+            <div class="stat-card-val" id="s-online">—</div>
+            <div class="stat-card-sub">сейчас активны</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">💬 Сообщений</div>
+            <div class="stat-card-val" id="s-msgs">—</div>
+            <div class="stat-card-sub">сегодня</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">🍽 Заказов</div>
+            <div class="stat-card-val" id="s-orders">—</div>
+            <div class="stat-card-sub">room service</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">🚨 Эскалаций</div>
+            <div class="stat-card-val" id="s-esc">—</div>
+            <div class="stat-card-sub">к персоналу</div>
+          </div>
+        </div>
+        <div class="section-title">Активные гости</div>
+        <div class="guest-table" id="dash-guests">
+          <div class="gt-row hd">
+            <span>Комната</span><span>Платформа</span><span>Язык</span>
+            <span>Последнее сообщение</span><span>Время</span><span>Статус</span><span></span>
+          </div>
+          <div class="dash-empty">Загрузка…</div>
         </div>
       </div>
     </div>
 
-    <!-- Chat area -->
-    <div class="chat-area" id="chat-area">
-      <div class="chat-empty" id="chat-empty">
-        <div class="chat-empty-icon">💬</div>
-        <div class="chat-empty-txt">Выберите гостя из списка</div>
+    <!-- ── PANEL 2: DIALOGS ── -->
+    <div class="panel" id="panel-dialogs">
+      <div class="panel-hd">
+        <span>💬</span>
+        <div>
+          <div style="font-size:.98rem;font-weight:600;">Диалоги гостей</div>
+          <div class="panel-hd-sub">Просмотр и ответы в реальном времени</div>
+        </div>
+      </div>
+      <div class="dialogs-body">
+        <div class="dlg-sidebar">
+          <div class="dlg-sidebar-hd">
+            <input class="search-input" type="text" placeholder="🔍 Поиск…" oninput="filterGuests(this.value)">
+            <div class="dlg-count" id="dlg-count">—</div>
+          </div>
+          <div class="dlg-list" id="guest-list">
+            <div class="dlg-empty">Нет гостей</div>
+          </div>
+        </div>
+        <div class="chat-area" id="chat-area">
+          <div class="chat-placeholder">
+            <div class="chat-placeholder-icon">💬</div>
+            <div style="font-size:.86rem;">Выберите гостя из списка</div>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div>
-</div>
+    <!-- ── PANEL 3: HOTEL INFO ── -->
+    <div class="panel" id="panel-hotel">
+      <div class="panel-hd">
+        <span>🏨</span>
+        <div>
+          <div style="font-size:.98rem;font-weight:600;">Информация об отеле</div>
+          <div class="panel-hd-sub">Данные сохраняются в hotel_facts.json</div>
+        </div>
+        <div class="hd-space"></div>
+        <button class="btn-save" onclick="saveHotelInfo()">💾 Сохранить</button>
+      </div>
+      <div class="form-body" id="hotel-form-body">
+        <div class="form-grid" id="hotel-form">
+          <div style="text-align:center;padding:30px;color:var(--muted)">Загрузка…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 4: MENU ── -->
+    <div class="panel" id="panel-menu">
+      <div class="panel-hd">
+        <span>🍽</span>
+        <div>
+          <div style="font-size:.98rem;font-weight:600;">Меню ресторана</div>
+          <div class="panel-hd-sub">Изменения применяются сразу (до перезапуска сервера)</div>
+        </div>
+        <div class="hd-space"></div>
+        <button class="btn-save" onclick="saveMenu()">💾 Сохранить меню</button>
+      </div>
+      <div class="menu-body">
+        <div class="tabs-row">
+          <button class="tab-btn active" onclick="switchMenuTab('breakfast',this)">🌅 Завтрак</button>
+          <button class="tab-btn" onclick="switchMenuTab('main',this)">🍖 Основные</button>
+          <button class="tab-btn" onclick="switchMenuTab('drinks',this)">☕ Напитки</button>
+          <button class="tab-btn" onclick="switchMenuTab('night',this)">🌙 Ночное</button>
+        </div>
+        <div class="menu-cat active" id="menu-breakfast"></div>
+        <div class="menu-cat" id="menu-main"></div>
+        <div class="menu-cat" id="menu-drinks"></div>
+        <div class="menu-cat" id="menu-night"></div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 5: BOT PROMPT ── -->
+    <div class="panel" id="panel-prompt">
+      <div class="panel-hd">
+        <span>🤖</span>
+        <div>
+          <div style="font-size:.98rem;font-weight:600;">Промпт бота</div>
+          <div class="panel-hd-sub">Изменение применяется мгновенно без перезапуска</div>
+        </div>
+      </div>
+      <div class="prompt-body">
+        <div class="prompt-left">
+          <div class="prompt-sub-hd">
+            Системный промпт
+            <div class="hd-space"></div>
+          </div>
+          <textarea class="prompt-textarea" id="prompt-text" spellcheck="false"></textarea>
+          <div class="prompt-actions">
+            <button class="btn-save" onclick="savePrompt()">💾 Сохранить</button>
+            <button class="btn-outline" onclick="resetPrompt()">↺ Сбросить к умолчанию</button>
+          </div>
+        </div>
+        <div class="prompt-right">
+          <div class="prompt-sub-hd">Тест бота</div>
+          <div class="test-area">
+            <div class="test-msgs" id="test-msgs">
+              <div class="test-spinner">Напишите что-нибудь и бот ответит используя текущий промпт →</div>
+            </div>
+            <div class="test-input-row">
+              <input type="text" id="test-input" placeholder="Тестовый запрос…" onkeydown="testKey(event)">
+              <button class="send-btn" onclick="testSend()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /admin-panel -->
 
 <div id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════
 const PASS = "ammar2026";
 
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
 function doLogin() {
   const val = document.getElementById("password").value;
   const err = document.getElementById("login-err");
@@ -428,8 +676,7 @@ function doLogout() {
   document.getElementById("login-screen").style.display = "flex";
   document.getElementById("admin-panel").style.display  = "none";
   document.getElementById("password").value = "";
-  activeKey = null;
-  allGuests = [];
+  activeKey = null; allGuests = [];
 }
 
 function checkLogin() {
@@ -441,6 +688,8 @@ function showPanel() {
   document.getElementById("admin-panel").style.display  = "flex";
   loadData();
   startSSE();
+  loadMenu();
+  loadPrompt();
   setInterval(loadData, 5000);
 }
 
@@ -448,11 +697,34 @@ document.getElementById("password").addEventListener("keydown", e => {
   if (e.key === "Enter") doLogin();
 });
 
-// ═══════════════════════════════════════════════════════
-// API HELPER — всегда с Bearer токеном
-// ═══════════════════════════════════════════════════════
-async function api(path, opts = {}) {
-  const res = await fetch(path, {
+// ═══════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════
+let currentTab = "dash";
+
+document.querySelectorAll(".nav-item").forEach(el => {
+  el.addEventListener("click", () => {
+    const tab = el.dataset.tab;
+    switchTab(tab);
+  });
+});
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".nav-item").forEach(el => {
+    el.classList.toggle("active", el.dataset.tab === tab);
+  });
+  document.querySelectorAll(".panel").forEach(el => {
+    el.classList.toggle("active", el.id === "panel-" + tab);
+  });
+  if (tab === "hotel" && !hotelLoaded) loadHotelInfo();
+}
+
+// ═══════════════════════════════════════════════════
+// API HELPER
+// ═══════════════════════════════════════════════════
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
     ...opts,
     headers: {
       "Authorization": "Bearer " + PASS,
@@ -460,13 +732,13 @@ async function api(path, opts = {}) {
       ...(opts.headers || {}),
     },
   });
-  if (!res.ok) throw new Error("HTTP " + res.status);
+  if (!res.ok) throw new Error("HTTP " + res.status + " " + url);
   return res.json();
 }
 
-// ═══════════════════════════════════════════════════════
-// LOAD DATA (stats + guests)
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// DASHBOARD & GUESTS
+// ═══════════════════════════════════════════════════
 let allGuests = [];
 let activeKey = null;
 let filterText = "";
@@ -481,73 +753,97 @@ async function loadStats() {
     document.getElementById("s-msgs").textContent   = s.totalMessages     ?? 0;
     document.getElementById("s-orders").textContent = s.roomServiceOrders ?? 0;
     document.getElementById("s-esc").textContent    = s.escalations       ?? 0;
+    document.getElementById("dash-date").textContent = s.date ?? "";
     setOnline(true);
-  } catch (e) {
-    setOnline(false);
-  }
+  } catch { setOnline(false); }
 }
 
 async function loadGuests() {
   try {
     const data = await api("/api/admin/guests");
     allGuests = Array.isArray(data) ? data : [];
-    renderGuestList(filterText);
-    // Update online count
     const online = allGuests.filter(g => g.isOnline).length;
     document.getElementById("s-online").textContent = online;
-  } catch (e) {
-    // keep old list, just mark offline
-  }
+    renderGuestList(filterText);
+    renderDashGuests();
+  } catch { /* keep old data */ }
 }
 
+function renderDashGuests() {
+  const box = document.getElementById("dash-guests");
+  const hdr = `<div class="gt-row hd"><span>Комната</span><span>Платформа</span><span>Язык</span><span>Последнее сообщение</span><span>Время</span><span>Статус</span><span></span></div>`;
+  if (!allGuests.length) {
+    box.innerHTML = hdr + `<div class="dash-empty">Нет активных гостей.<br>Напишите боту в Telegram — появятся здесь.</div>`;
+    return;
+  }
+  const rows = allGuests.map(g => {
+    const plat  = g.session?.platform || "telegram";
+    const plab  = {telegram:"TG",web:"WEB",whatsapp:"WA"}[plat] || "?";
+    const pcls  = {telegram:"tg",web:"web",whatsapp:"wa"}[plat]  || "tg";
+    const room  = g.session?.roomNumber || "?";
+    const lang  = (g.session?.language || "ru").slice(0,2).toUpperCase();
+    return `<div class="gt-row">
+      <span class="gt-room">Ком. ${esc(room)}</span>
+      <span><span class="tag ${pcls}">${plab}</span></span>
+      <span>${lang}</span>
+      <span class="gt-msg">${esc(g.lastMessage || "—")}</span>
+      <span style="font-size:.75rem;color:var(--muted)">${fmtTime(g.lastTime)}</span>
+      <span><div class="online-dot ${g.isOnline?"on":""}"></div></span>
+      <span><button class="btn-sm" onclick="openDialog('${esc(g.key)}')">Открыть</button></span>
+    </div>`;
+  }).join("");
+  box.innerHTML = hdr + rows;
+}
+
+function openDialog(key) {
+  switchTab("dialogs");
+  activeKey = key;
+  renderGuestList(filterText);
+  const g = allGuests.find(x => x.key === key);
+  if (g) loadHistory(key, g);
+}
+
+// ═══════════════════════════════════════════════════
+// DIALOGS
+// ═══════════════════════════════════════════════════
 function filterGuests(q) {
   filterText = q.toLowerCase();
   renderGuestList(filterText);
 }
 
 function renderGuestList(q = "") {
-  const list = document.getElementById("guest-list");
-  const count = document.getElementById("sb-count");
-
+  const list  = document.getElementById("guest-list");
+  const count = document.getElementById("dlg-count");
   let items = allGuests;
   if (q) {
     items = allGuests.filter(g => {
-      const room = (g.session?.roomNumber || "").toLowerCase();
-      const msg  = (g.lastMessage || "").toLowerCase();
-      const plat = (g.session?.platform || "").toLowerCase();
-      return room.includes(q) || msg.includes(q) || plat.includes(q);
+      return (g.session?.roomNumber || "").toLowerCase().includes(q)
+          || (g.lastMessage || "").toLowerCase().includes(q)
+          || (g.session?.platform || "").toLowerCase().includes(q);
     });
   }
-
-  // Sort: online first, then by lastTime desc
   items = [...items].sort((a, b) => {
     if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
     return (b.lastTime || "") > (a.lastTime || "") ? 1 : -1;
   });
-
   count.textContent = items.length + " " + plural(items.length, "гость", "гостя", "гостей");
-
   if (!items.length) {
-    list.innerHTML = `<div class="sb-empty">
-      <div class="sb-empty-icon">🏨</div>
-      ${q ? "Ничего не найдено" : "Нет активных гостей.<br>Напишите боту в Telegram."}
-    </div>`;
+    list.innerHTML = `<div class="dlg-empty">${q ? "Ничего не найдено" : "Нет гостей.<br>Напишите боту."}</div>`;
     return;
   }
-
   list.innerHTML = items.map(g => {
-    const platform  = g.session?.platform || "telegram";
-    const platLabel = { telegram:"TG", web:"WEB", whatsapp:"WA" }[platform] || "?";
-    const platClass = { telegram:"tg", web:"web", whatsapp:"wa" }[platform] || "tg";
-    const room      = g.session?.roomNumber || "?";
-    const lang      = (g.session?.language || "ru").slice(0, 2).toUpperCase();
-    const isActive  = activeKey === g.key;
-    return `<div class="guest-row${isActive ? " active" : ""}" onclick="selectGuest('${esc(g.key)}')">
+    const plat  = g.session?.platform || "telegram";
+    const plab  = {telegram:"TG",web:"WEB",whatsapp:"WA"}[plat] || "?";
+    const pcls  = {telegram:"tg",web:"web",whatsapp:"wa"}[plat]  || "tg";
+    const room  = g.session?.roomNumber || "?";
+    const lang  = (g.session?.language || "ru").slice(0,2).toUpperCase();
+    const isAct = activeKey === g.key;
+    return `<div class="guest-row${isAct?" active":""}" onclick="selectGuest('${esc(g.key)}')">
       <div class="gr-top">
-        <span class="gr-room">Ком. ${room}</span>
-        <span class="gr-tag platform-badge ${platClass}">${platLabel}</span>
-        <span class="gr-tag">${lang}</span>
-        <span class="gr-dot${g.isOnline ? " on" : ""}"></span>
+        <span class="gr-room">Ком. ${esc(room)}</span>
+        <span class="tag ${pcls}" style="font-size:.6rem;padding:1px 5px;">${plab}</span>
+        <span class="tag" style="font-size:.6rem;padding:1px 5px;background:rgba(255,255,255,.06);color:var(--muted)">${lang}</span>
+        <span class="gr-dot ${g.isOnline?"on":""}"></span>
       </div>
       <div class="gr-msg">${esc(g.lastMessage || "—")}</div>
       <div class="gr-time">${fmtTime(g.lastTime)}</div>
@@ -555,70 +851,63 @@ function renderGuestList(q = "") {
   }).join("");
 }
 
-// ═══════════════════════════════════════════════════════
-// SELECT GUEST & LOAD HISTORY
-// ═══════════════════════════════════════════════════════
 async function selectGuest(key) {
   activeKey = key;
-  renderGuestList(filterText); // update active highlight
-
+  renderGuestList(filterText);
   const g = allGuests.find(x => x.key === key);
+  if (g) await loadHistory(key, g);
+}
+
+async function loadHistory(key, g) {
   const platform = g?.session?.platform || "telegram";
-  const platLabel = { telegram:"TG", web:"WEB", whatsapp:"WA" }[platform] || "?";
-  const platClass = { telegram:"tg", web:"web", whatsapp:"wa" }[platform] || "tg";
-  const room      = g?.session?.roomNumber || "?";
-  const name      = g?.session?.guestName  || "Гость";
-  const lang      = g?.session?.language   || "ru";
-  const msgs      = g?.msgCount || 0;
-  const canSend   = platform === "telegram";
+  const plab     = {telegram:"TG",web:"WEB",whatsapp:"WA"}[platform] || "?";
+  const pcls     = {telegram:"tg",web:"web",whatsapp:"wa"}[platform]  || "tg";
+  const room     = g?.session?.roomNumber || "?";
+  const canSend  = platform === "telegram";
 
   const area = document.getElementById("chat-area");
   area.innerHTML = `
     <div class="chat-hd">
       <div class="chat-hd-av">🛎</div>
       <div>
-        <div class="chat-hd-room">Комната ${room}</div>
-        <div class="chat-hd-info">${esc(name)} · ${lang} · ${msgs} сообщений</div>
+        <div class="chat-hd-room">Комната ${esc(room)}</div>
+        <div class="chat-hd-info">${esc(g?.session?.guestName||"Гость")} · ${g?.session?.language||"ru"} · ${g?.msgCount||0} сообщ.</div>
       </div>
-      <div class="chat-hd-sp"></div>
-      <span class="platform-badge ${platClass}">${platLabel}</span>
+      <div class="hd-space"></div>
+      <span class="tag ${pcls}">${plab}</span>
     </div>
-    <div class="messages" id="msg-area"><div style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px">Загрузка…</div></div>
+    <div class="messages" id="msg-area"><div style="color:var(--muted);font-size:.78rem;text-align:center;padding:18px">Загрузка…</div></div>
     ${canSend
       ? `<div class="send-bar">
            <textarea id="send-input" rows="1" placeholder="Написать гостю от менеджера…" onkeydown="sendKey(event)"></textarea>
            <button class="send-btn" onclick="sendMsg()" id="send-btn">➤</button>
          </div>`
-      : `<div class="send-note">Отправка только для Telegram-гостей</div>`
-    }
-  `;
+      : `<div style="padding:10px 14px;font-size:.74rem;color:var(--muted);border-top:1px solid var(--border)">Отправка только для Telegram-гостей</div>`
+    }`;
 
-  // Load history
   try {
     const history = await api("/api/admin/history/" + encodeURIComponent(key));
     const msgArea = document.getElementById("msg-area");
     if (!msgArea) return;
     if (!Array.isArray(history) || !history.length) {
-      msgArea.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:20px">История пуста</div>';
+      msgArea.innerHTML = `<div style="color:var(--muted);font-size:.78rem;text-align:center;padding:18px">История пуста</div>`;
       return;
     }
-    msgArea.innerHTML = history.map(renderMsg).join("");
+    msgArea.innerHTML = history.map(renderMsgBubble).join("");
     msgArea.scrollTop = msgArea.scrollHeight;
-  } catch (e) {
+  } catch {
     const m = document.getElementById("msg-area");
-    if (m) m.innerHTML = '<div style="color:var(--red);font-size:.8rem;text-align:center;padding:20px">Ошибка загрузки истории</div>';
+    if (m) m.innerHTML = `<div style="color:var(--red);font-size:.78rem;text-align:center;padding:18px">Ошибка загрузки</div>`;
   }
 }
 
-function renderMsg(m) {
-  const cls    = m.role === "user" ? "user" : "assistant";
-  const who    = m.role === "user" ? "👤 Гость" : "🤖 Ammar AI";
-  const bubble = esc(m.content || "");
-  const time   = fmtTime(m.time);
+function renderMsgBubble(m) {
+  const cls = m.role === "user" ? "user" : "assistant";
+  const who = m.role === "user" ? "👤 Гость" : "🤖 Ammar AI";
   return `<div class="msg ${cls}">
     <div class="msg-who">${who}</div>
-    <div class="msg-bubble">${bubble}</div>
-    ${time ? `<div class="msg-ts">${time}</div>` : ""}
+    <div class="msg-bubble">${esc(m.content || "")}</div>
+    ${m.time ? `<div class="msg-ts">${fmtTime(m.time)}</div>` : ""}
   </div>`;
 }
 
@@ -626,14 +915,11 @@ function appendMsg(role, content) {
   const area = document.getElementById("msg-area");
   if (!area) return;
   const div = document.createElement("div");
-  div.innerHTML = renderMsg({ role, content, time: new Date().toISOString() });
+  div.innerHTML = renderMsgBubble({ role, content, time: new Date().toISOString() });
   area.appendChild(div.firstElementChild);
   area.scrollTop = area.scrollHeight;
 }
 
-// ═══════════════════════════════════════════════════════
-// SEND MESSAGE
-// ═══════════════════════════════════════════════════════
 function sendKey(e) {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 }
@@ -643,14 +929,11 @@ async function sendMsg() {
   const btn = document.getElementById("send-btn");
   const txt = inp?.value?.trim();
   if (!txt || !activeKey) return;
-
   inp.value = "";
   if (btn) btn.disabled = true;
-
   try {
     await api("/api/admin/send/" + encodeURIComponent(activeKey), {
-      method: "POST",
-      body:   JSON.stringify({ message: txt }),
+      method: "POST", body: JSON.stringify({ message: txt }),
     });
     appendMsg("assistant", "👔 [Менеджер]: " + txt);
     toast("✅ Сообщение отправлено");
@@ -662,9 +945,252 @@ async function sendMsg() {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-// SSE — реальное время
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// HOTEL INFO
+// ═══════════════════════════════════════════════════
+let hotelLoaded = false;
+let hotelData   = null;
+
+async function loadHotelInfo() {
+  hotelLoaded = true;
+  const form = document.getElementById("hotel-form");
+  try {
+    hotelData = await api("/api/admin/hotel-info");
+    renderHotelForm(hotelData);
+  } catch (e) {
+    form.innerHTML = `<div style="color:var(--red);padding:20px">Ошибка: ${esc(e.message)}</div>`;
+  }
+}
+
+function field(id, label, value, type = "text", span = false) {
+  const spanCls = span ? " class='form-section-title'" : "";
+  return `<div class="field"${span ? " style='grid-column:1/-1'" : ""}>
+    <label>${label}</label>
+    <input type="${type}" id="hf-${id}" value="${esc(String(value || ""))}">
+  </div>`;
+}
+
+function fieldTA(id, label, value, span = false) {
+  return `<div class="field"${span ? " style='grid-column:1/-1'" : ""}>
+    <label>${label}</label>
+    <textarea id="hf-${id}" rows="3">${esc(String(value || ""))}</textarea>
+  </div>`;
+}
+
+function renderHotelForm(d) {
+  const h = d.hotel || {}; const s = d.schedule || {}; const p = d.policies || {};
+  const sv = d.services || {}; const l = d.location || {}; const c = d.contacts || {};
+  document.getElementById("hotel-form").innerHTML = `
+    <div class="form-section-title" style="grid-column:1/-1">📋 Основное</div>
+    ${field("name",    "Название отеля",  h.name)}
+    ${field("phone",   "Телефон",         h.phone)}
+    ${field("iphone",  "Внутренний",      h.internal_phone)}
+    ${field("email",   "Email",           h.email, "email")}
+    ${field("address", "Адрес",           h.address, "text", true)}
+
+    <div class="form-section-title" style="grid-column:1/-1">🕐 Расписание</div>
+    ${field("s-rest",    "Ресторан",        s.restaurant)}
+    ${field("s-brkfst",  "Завтрак",         s.breakfast)}
+    ${field("s-rs",      "Рум-сервис",      s.room_service)}
+    ${field("s-spa",     "SPA",             s.spa)}
+    ${field("s-gym",     "Тренажёрный зал", s.gym)}
+    ${field("s-checkin", "Check-in",        s.checkin)}
+    ${field("s-checkout","Check-out",       s.checkout)}
+    ${field("s-late",    "Поздний выезд",   s.late_checkout)}
+    ${field("s-night",   "Ночной сервис",   s.night_service, "text", true)}
+
+    <div class="form-section-title" style="grid-column:1/-1">🔒 Политики</div>
+    ${field("p-wifi",    "WiFi",       p.wifi, "text", true)}
+    ${field("p-parking", "Парковка",   p.parking)}
+    ${field("p-smoking", "Курение",    p.smoking)}
+    ${field("p-pets",    "Животные",   p.pets)}
+    ${field("p-visitors","Гости",      p.visitors, "text", true)}
+
+    <div class="form-section-title" style="grid-column:1/-1">🛎 Услуги</div>
+    ${field("sv-luggage",  "Хранение багажа",   sv.luggage_storage)}
+    ${field("sv-exchange", "Обмен валюты",      sv.currency_exchange)}
+    ${field("sv-cot",      "Детская кроватка",  sv.baby_cot)}
+
+    <div class="form-section-title" style="grid-column:1/-1">📍 Рядом с отелем</div>
+    ${field("l-market",   "Супермаркет",  l.supermarket)}
+    ${field("l-pharmacy", "Аптека",       l.pharmacy)}
+    ${field("l-bank",     "Банк",         l.bank)}
+    ${field("l-taxi",     "Такси-сервис", l.taxi_app)}
+
+    <div class="form-section-title" style="grid-column:1/-1">📞 Контакты</div>
+    ${field("c-reception", "Ресепшн",         c.reception, "text", true)}
+    ${field("c-emergency", "Экстренные службы",c.emergency, "text", true)}
+  `;
+}
+
+async function saveHotelInfo() {
+  if (!hotelData) return;
+  const g = id => document.getElementById("hf-" + id)?.value || "";
+  const updated = JSON.parse(JSON.stringify(hotelData));
+  const h = updated.hotel    = updated.hotel    || {};
+  const s = updated.schedule = updated.schedule || {};
+  const p = updated.policies = updated.policies || {};
+  const sv= updated.services = updated.services || {};
+  const l = updated.location = updated.location || {};
+  const c = updated.contacts = updated.contacts || {};
+
+  h.name = g("name"); h.phone = g("phone"); h.internal_phone = g("iphone");
+  h.email = g("email"); h.address = g("address");
+  s.restaurant = g("s-rest"); s.breakfast = g("s-brkfst"); s.room_service = g("s-rs");
+  s.spa = g("s-spa"); s.gym = g("s-gym"); s.checkin = g("s-checkin");
+  s.checkout = g("s-checkout"); s.late_checkout = g("s-late"); s.night_service = g("s-night");
+  p.wifi = g("p-wifi"); p.parking = g("p-parking"); p.smoking = g("p-smoking");
+  p.pets = g("p-pets"); p.visitors = g("p-visitors");
+  sv.luggage_storage = g("sv-luggage"); sv.currency_exchange = g("sv-exchange"); sv.baby_cot = g("sv-cot");
+  l.supermarket = g("l-market"); l.pharmacy = g("l-pharmacy"); l.bank = g("l-bank"); l.taxi_app = g("l-taxi");
+  c.reception = g("c-reception"); c.emergency = g("c-emergency");
+
+  try {
+    await api("/api/admin/hotel-info", { method: "POST", body: JSON.stringify(updated) });
+    hotelData = updated;
+    toast("✅ Информация об отеле сохранена");
+  } catch (e) {
+    toast("❌ Ошибка: " + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MENU
+// ═══════════════════════════════════════════════════
+let menuData = { breakfast: [], main: [], drinks: [], night: [] };
+let currentMenuCat = "breakfast";
+
+async function loadMenu() {
+  try {
+    menuData = await api("/api/admin/menu");
+    renderAllMenuCats();
+  } catch { /* use defaults */ }
+}
+
+function switchMenuTab(cat, btn) {
+  currentMenuCat = cat;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".menu-cat").forEach(el => {
+    el.classList.toggle("active", el.id === "menu-" + cat);
+  });
+}
+
+function renderAllMenuCats() {
+  ["breakfast","main","drinks","night"].forEach(cat => renderMenuCat(cat));
+}
+
+function renderMenuCat(cat) {
+  const items = menuData[cat] || [];
+  const el = document.getElementById("menu-" + cat);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="menu-items" id="mi-${cat}">
+      ${items.map((item, i) => renderMenuItem(cat, i, item)).join("")}
+    </div>
+    <div class="add-item-row" style="margin-top:10px">
+      <input type="text"   id="new-name-${cat}"  placeholder="Название блюда…">
+      <input type="text"   id="new-price-${cat}" placeholder="Цена (50 сом)">
+      <button class="btn-add-item" onclick="addMenuItem('${cat}')">+ Добавить</button>
+    </div>`;
+}
+
+function renderMenuItem(cat, i, item) {
+  return `<div class="menu-item" id="mi-${cat}-${i}">
+    <input class="mi-name"  type="text" value="${esc(item.name||"")}"  onchange="updateMenuItem('${cat}',${i},'name',this.value)">
+    <input class="mi-price" type="text" value="${esc(item.price||"")}" onchange="updateMenuItem('${cat}',${i},'price',this.value)">
+    <button class="btn-del" onclick="deleteMenuItem('${cat}',${i})" title="Удалить">✕</button>
+  </div>`;
+}
+
+function updateMenuItem(cat, i, field, value) {
+  if (!menuData[cat]) return;
+  menuData[cat][i] = { ...menuData[cat][i], [field]: value };
+}
+
+function deleteMenuItem(cat, i) {
+  menuData[cat].splice(i, 1);
+  renderMenuCat(cat);
+}
+
+function addMenuItem(cat) {
+  const nameEl  = document.getElementById("new-name-"  + cat);
+  const priceEl = document.getElementById("new-price-" + cat);
+  const name  = nameEl?.value?.trim();
+  const price = priceEl?.value?.trim();
+  if (!name) { toast("Введите название блюда"); return; }
+  if (!menuData[cat]) menuData[cat] = [];
+  menuData[cat].push({ name, price: price || "0 сом" });
+  renderMenuCat(cat);
+  toast("Добавлено: " + name);
+}
+
+async function saveMenu() {
+  try {
+    await api("/api/admin/menu", { method: "POST", body: JSON.stringify(menuData) });
+    toast("✅ Меню сохранено и применено");
+  } catch (e) {
+    toast("❌ Ошибка: " + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// BOT PROMPT
+// ═══════════════════════════════════════════════════
+async function loadPrompt() {
+  try {
+    const r = await api("/api/admin/prompt");
+    document.getElementById("prompt-text").value = r.prompt || "";
+  } catch { /* ignore */ }
+}
+
+async function savePrompt() {
+  const prompt = document.getElementById("prompt-text").value;
+  try {
+    await api("/api/admin/prompt", { method: "POST", body: JSON.stringify({ prompt }) });
+    toast("✅ Промпт обновлён — вступает в силу немедленно");
+  } catch (e) {
+    toast("❌ " + e.message);
+  }
+}
+
+async function resetPrompt() {
+  try {
+    const r = await api("/api/admin/prompt", { method: "POST", body: JSON.stringify({ reset: true }) });
+    document.getElementById("prompt-text").value = r.prompt || "";
+    toast("↺ Промпт сброшен к умолчанию");
+  } catch (e) {
+    toast("❌ " + e.message);
+  }
+}
+
+function testKey(e) { if (e.key === "Enter") testSend(); }
+
+async function testSend() {
+  const inp = document.getElementById("test-input");
+  const txt = inp?.value?.trim();
+  if (!txt) return;
+  inp.value = "";
+
+  const msgs = document.getElementById("test-msgs");
+  msgs.innerHTML += `<div class="test-bubble-user">${esc(txt)}</div>`;
+  msgs.innerHTML += `<div class="test-spinner" id="test-typing">⏳ Бот думает…</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    const r = await api("/api/admin/test-chat", { method: "POST", body: JSON.stringify({ message: txt }) });
+    document.getElementById("test-typing")?.remove();
+    msgs.innerHTML += `<div class="test-bubble-bot">${esc(r.reply || "—")}</div>`;
+  } catch (e) {
+    document.getElementById("test-typing")?.remove();
+    msgs.innerHTML += `<div class="test-bubble-bot" style="color:var(--red)">Ошибка: ${esc(e.message)}</div>`;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════
+// SSE
+// ═══════════════════════════════════════════════════
 let sse = null;
 
 function startSSE() {
@@ -674,15 +1200,11 @@ function startSSE() {
   sse.addEventListener("message", e => {
     try {
       const data = JSON.parse(e.data);
-      // Refresh guest list
-      loadGuests();
-      loadStats();
-      // If current guest → append new messages live
+      loadGuests(); loadStats();
       if (data.sessionKey === activeKey) {
         if (data.userMessage) appendMsg("user",      data.userMessage);
         if (data.botReply)    appendMsg("assistant", data.botReply);
       }
-      // Alert on escalation
       const combined = (data.userMessage || "") + (data.botReply || "");
       if (/эскалаци|escalat|жалоб|complaint/i.test(combined)) {
         toast("🚨 Эскалация! Ком. " + (data.room || "?"), 6000);
@@ -692,20 +1214,17 @@ function startSSE() {
   });
 
   sse.onopen  = () => setOnline(true);
-  sse.onerror = () => {
-    setOnline(false);
-    setTimeout(startSSE, 5000);
-  };
+  sse.onerror = () => { setOnline(false); setTimeout(startSSE, 5000); };
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // HELPERS
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function setOnline(on) {
   const dot   = document.getElementById("conn-dot");
   const label = document.getElementById("conn-label");
   if (!dot || !label) return;
-  dot.className   = "h-dot " + (on ? "online" : "offline");
+  dot.className    = "conn-dot " + (on ? "online" : "offline");
   label.textContent = on ? "Online" : "Переподключение…";
 }
 
@@ -739,8 +1258,8 @@ function fmtTime(iso) {
     if (d.toDateString() === now.toDateString()) {
       return d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
     }
-    return d.toLocaleDateString("ru-RU", { day:"2-digit", month:"2-digit" })
-         + " " + d.toLocaleTimeString("ru-RU", { hour:"2-digit", minute:"2-digit" });
+    return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" })
+         + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
   } catch { return ""; }
 }
 
@@ -753,15 +1272,15 @@ function esc(s) {
 }
 
 function plural(n, one, few, many) {
-  const mod10 = n % 10, mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return n + " " + one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return n + " " + few;
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return n + " " + one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return n + " " + few;
   return n + " " + many;
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 // INIT
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 checkLogin();
 </script>
 </body>

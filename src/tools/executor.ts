@@ -7,6 +7,7 @@ import { logger }      from "../utils/logger";
 import { prisma }      from "../utils/db";
 import cityGuide       from "../data/city_guide.json";
 import { incRoomService, incEscalations } from "../utils/stats";
+import { getMenuByTime } from "../utils/menuStore";
 
 export async function executeToolCall(
   name:  string,
@@ -215,43 +216,9 @@ async function toolUpsell(room: string, input: any, _g: GuestCtx) {
   return { success: true, offer: offers[input.offer_type] };
 }
 
-// ════════ 9. МЕНЮ ════════════════════════════════════════════════
-async function toolMenu(mealTime = "all") {
-  const menus: Record<string, any[]> = {
-    breakfast: [
-      { name: "Яичница с овощами", price: "20 сом" },
-      { name: "Каша овсяная",      price: "15 сом" },
-      { name: "Круассан с маслом", price: "18 сом" },
-      { name: "Фруктовая тарелка", price: "25 сом" },
-    ],
-    lunch: [
-      { name: "Плов таджикский",  price: "45 сом" },
-      { name: "Лагман",           price: "40 сом" },
-      { name: "Шашлык (3 шп.)",   price: "55 сом" },
-      { name: "Салат свежий",     price: "25 сом" },
-      { name: "Сэндвич с курицей",price: "35 сом" },
-    ],
-    dinner: [
-      { name: "Плов таджикский",  price: "45 сом" },
-      { name: "Лагман",           price: "40 сом" },
-      { name: "Шашлык (3 шп.)",   price: "55 сом" },
-      { name: "Салат свежий",     price: "25 сом" },
-      { name: "Сэндвич с курицей",price: "35 сом" },
-    ],
-    drinks: [
-      { name: "Чай зел./чёрн.",   price: "10 сом" },
-      { name: "Кофе эспрессо",    price: "15 сом" },
-      { name: "Сок свежий",       price: "20 сом" },
-      { name: "Вода минеральная", price: "8 сом"  },
-    ],
-  };
-  if (mealTime === "all") return { menu: menus, hours: "07:00–23:00", location: "1 этаж", currency: "сом (сомони)" };
-  return {
-    meal:     mealTime,
-    items:    menus[mealTime] ?? [],
-    hours:    mealTime === "breakfast" ? "07:00–10:30" : "11:00–23:00",
-    currency: "сом (сомони)",
-  };
+// ════════ 9. МЕНЮ (из menuStore — редактируется через админку) ═══
+function toolMenu(mealTime = "all") {
+  return getMenuByTime(mealTime);
 }
 
 // ════════ 10. ПОБУДКА ════════════════════════════════════════════

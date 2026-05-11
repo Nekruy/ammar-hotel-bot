@@ -2,7 +2,7 @@
 // AI движок — Groq (groq.com), совместим с OpenAI SDK
 
 import OpenAI from "openai";
-import { SYSTEM_PROMPT } from "../config/systemPrompt";
+import { getSystemPrompt } from "../utils/promptStore";
 import { TOOLS }         from "../config/tools";
 import { executeToolCall } from "../tools/executor";
 import { logger }        from "../utils/logger";
@@ -235,7 +235,7 @@ function buildSystem(guest: GuestCtx): string {
   });
   const quiet = parseInt(hour) >= 22 || parseInt(hour) < 8;
 
-  return SYSTEM_PROMPT + `
+  return getSystemPrompt() + `
 
 ═══════════════════════════════════════════════
 ГОСТЬ СЕЙЧАС

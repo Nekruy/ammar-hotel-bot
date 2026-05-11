@@ -1,5 +1,6 @@
 // src/server/index.ts — Главная точка входа
 import "dotenv/config";
+import fs   from "fs";
 import path from "path";
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
@@ -11,6 +12,8 @@ import { logger }                            from "../utils/logger";
 import { getAllSessions, getHistoryByKey }   from "../utils/redis";
 import { getStats }                          from "../utils/stats";
 import { addSSEClient, removeSSEClient }     from "../utils/adminEvents";
+import { getFullMenu, setFullMenu }          from "../utils/menuStore";
+import { getSystemPrompt, setSystemPrompt, resetSystemPrompt } from "../utils/promptStore";
 
 // Domains allowed to call /api/* from a browser
 const ALLOWED_ORIGINS = [
@@ -43,16 +46,13 @@ app.use(helmet({
 
 app.use(cors({
   origin(origin, cb) {
-    // No origin = server-to-server / curl / Postman — allow
     if (!origin) return cb(null, true);
-    // Whitelisted production domains
     if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    // Any localhost port for local development
     if (/^https?:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true);
     cb(new Error(`CORS: ${origin} not allowed`));
   },
   methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json({ limit: "1mb" }));
@@ -139,6 +139,82 @@ app.get("/api/admin/events", adminAuth, (req, res) => {
     clearInterval(hb);
     removeSSEClient(res);
   });
+});
+
+// GET /api/admin/hotel-info — read hotel_facts.json
+app.get("/api/admin/hotel-info", adminAuth, (_req, res) => {
+  try {
+    const fp = path.join(__dirname, "../data/hotel_facts.json");
+    res.json(JSON.parse(fs.readFileSync(fp, "utf8")));
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/admin/hotel-info — overwrite hotel_facts.json
+app.post("/api/admin/hotel-info", adminAuth, (req, res) => {
+  try {
+    const fp = path.join(__dirname, "../data/hotel_facts.json");
+    fs.writeFileSync(fp, JSON.stringify(req.body, null, 2), "utf8");
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/menu — current in-memory menu
+app.get("/api/admin/menu", adminAuth, (_req, res) => {
+  res.json(getFullMenu());
+});
+
+// POST /api/admin/menu — update menu at runtime
+app.post("/api/admin/menu", adminAuth, (req, res) => {
+  try {
+    setFullMenu(req.body);
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/prompt — current system prompt
+app.get("/api/admin/prompt", adminAuth, (_req, res) => {
+  res.json({ prompt: getSystemPrompt() });
+});
+
+// POST /api/admin/prompt — override or reset system prompt
+app.post("/api/admin/prompt", adminAuth, (req, res) => {
+  const { prompt, reset } = req.body as { prompt?: string; reset?: boolean };
+  if (reset) { resetSystemPrompt(); return res.json({ ok: true, prompt: getSystemPrompt() }); }
+  if (prompt) { setSystemPrompt(prompt); return res.json({ ok: true }); }
+  res.status(400).json({ error: "prompt or reset required" });
+});
+
+// POST /api/admin/test-chat — send test message as a guest (admin tab)
+app.post("/api/admin/test-chat", adminAuth, async (req, res) => {
+  const { message } = req.body as { message?: string };
+  if (!message) return res.status(400).json({ error: "message required" });
+  try {
+    const { chat } = await import("../ai/grokService");
+    const { reply } = await chat(message, [], {
+      guestId: "admin_test", roomNumber: "ADMIN", guestName: "Admin",
+      language: "russian", platform: "web",
+    });
+    res.json({ reply });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/admin/test-notify — send test notification to staff
+app.post("/api/admin/test-notify", adminAuth, async (req, res) => {
+  const { channel = "reception" } = req.body as { channel?: string };
+  try {
+    await notifyStaff(channel as any, { type: "🧪 ТЕСТ", room: "Admin", message: "Тестовое уведомление из админки" });
+    res.json({ ok: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // GET /admin → serve admin.html (no auth — HTML handles it client-side)
