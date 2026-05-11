@@ -241,6 +241,57 @@ app.post("/api/admin/test-notify", adminAuth, async (req, res) => {
   }
 });
 
+// ── Revenue Management API ────────────────────────────────────────
+const revData = (file: string) => path.join(__dirname, "../data/" + file);
+
+function readRevJson(file: string, fallback: any = []) {
+  try { return JSON.parse(fs.readFileSync(revData(file), "utf8")); } catch { return fallback; }
+}
+function writeRevJson(file: string, data: any) {
+  fs.writeFileSync(revData(file), JSON.stringify(data, null, 2), "utf8");
+}
+
+app.get("/api/admin/revenue/competitors", adminAuth, (_req, res) => {
+  res.json(readRevJson("competitors.json"));
+});
+
+app.post("/api/admin/revenue/competitors", adminAuth, (req, res) => {
+  writeRevJson("competitors.json", req.body);
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/revenue/events", adminAuth, (_req, res) => {
+  res.json(readRevJson("revenue_events.json"));
+});
+
+app.post("/api/admin/revenue/events", adminAuth, (req, res) => {
+  writeRevJson("revenue_events.json", req.body);
+  res.json({ ok: true });
+});
+
+app.get("/api/admin/revenue/recommendations", adminAuth, (_req, res) => {
+  res.json(readRevJson("revenue_recommendations.json"));
+});
+
+app.post("/api/admin/revenue/analyze", adminAuth, async (_req, res) => {
+  try {
+    const { runRevenueAnalysis } = await import("../revenue/revenueScheduler");
+    const result = await runRevenueAnalysis();
+    res.json({ ok: true, recommendation: result });
+  } catch (e: any) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.post("/api/admin/revenue/decision/:id", adminAuth, (req, res) => {
+  const { status } = req.body as { status: string };
+  const recs = readRevJson("revenue_recommendations.json");
+  const rec  = recs.find((r: any) => r.id === req.params.id);
+  if (rec) { rec.status = status; rec.decidedAt = new Date().toISOString(); }
+  writeRevJson("revenue_recommendations.json", recs);
+  res.json({ ok: true });
+});
+
 // GET /admin → serve admin.html (no auth — HTML handles it client-side)
 app.get("/admin", (_req, res) => {
   res.sendFile(path.join(__dirname, "../../public/admin.html"));
@@ -332,6 +383,12 @@ async function main() {
     await wa.initialize();
     logger.info("📱 WhatsApp initializing...");
   }
+
+  // Revenue Management scheduler
+  try {
+    const { startRevenueScheduler } = await import("../revenue/revenueScheduler");
+    startRevenueScheduler();
+  } catch (e: any) { logger.warn("Revenue scheduler not started", { err: e.message }); }
 
   logger.info("🏨 AMMAR Hotel Bot ready", {
     ai:       "Groq (groq.com)",

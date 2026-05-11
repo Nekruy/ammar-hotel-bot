@@ -1,0 +1,37 @@
+[
+  {
+    "id": "comp-1",
+    "name": "Hyatt Regency Dushanbe",
+    "stars": 5,
+    "bookingUrl": "https://www.booking.com/hotel/tj/hyatt-regency-dushanbe.html",
+    "url": "https://www.hyatt.com"
+  },
+  {
+    "id": "comp-2",
+    "name": "Tajikistan Hotel",
+    "stars": 4,
+    "bookingUrl": "https://www.booking.com/hotel/tj/tajikistan.html",
+    "url": "https://tajikistanhotel.tj"
+  },
+  {
+    "id": "comp-3",
+    "name": "Serena Hotel Dushanbe",
+    "stars": 5,
+    "bookingUrl": "https://www.booking.com/hotel/tj/serena-dushanbe.html",
+    "url": "https://serenahotels.com"
+  },
+  {
+    "id": "comp-4",
+    "name": "Dushanbe Marriott",
+    "stars": 5,
+    "bookingUrl": "https://www.booking.com/hotel/tj/dushanbe-marriott.html",
+    "url": "https://marriott.com"
+  },
+  {
+    "id": "comp-5",
+    "name": "Grand Anzob Hotel",
+    "stars": 4,
+    "bookingUrl": "https://www.booking.com/hotel/tj/grand-anzob.html",
+    "url": ""
+  }
+]

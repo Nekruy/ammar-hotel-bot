@@ -483,6 +483,98 @@ body {
   display: flex; gap: 8px; align-items: center; flex-shrink: 0;
 }
 
+/* ─── REVENUE AI ─────────────────────────────────────── */
+.rev-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.rev-tabs-row {
+  display: flex; gap: 0; flex-shrink: 0;
+  background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 16px;
+}
+.rev-tab-btn {
+  padding: 10px 15px; background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-size: .81rem; font-family: inherit;
+  cursor: pointer; transition: all .15s; margin-bottom: -1px; white-space: nowrap;
+}
+.rev-tab-btn:hover  { color: var(--text); }
+.rev-tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 600; }
+.rev-tab-content { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.rev-tab { display: none; }
+.rev-tab.active { display: block; }
+.rev-stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.rev-chart-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;
+}
+.rev-chart-title { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+.rev-table { width: 100%; border-collapse: collapse; }
+.rev-table-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; margin-bottom: 20px;
+}
+.rev-table th {
+  padding: 8px 14px; font-size: .66rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .4px; background: var(--bg3); text-align: left; border-bottom: 1px solid var(--border);
+}
+.rev-table td { padding: 9px 14px; font-size: .82rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+.rev-table tr:last-child td { border-bottom: none; }
+.rev-table tr:not(.rev-our-row):hover td { background: rgba(196,160,96,.03); }
+.rev-our-row td { color: var(--gold); font-weight: 600; background: rgba(196,160,96,.04); }
+.rev-form {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+}
+.rev-form-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.rev-form-row .field { min-width: 130px; }
+.rev-form-row .field.grow { flex: 1; }
+.rev-rec-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;
+  transition: border-color .2s;
+}
+.rev-rec-card.accepted { border-color: var(--green); }
+.rev-rec-card.rejected { border-color: rgba(255,255,255,.08); opacity: .55; }
+.rev-rec-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rev-rec-id { font-size: .68rem; color: var(--gold); font-weight: 600; }
+.rev-rec-date { font-size: .68rem; color: var(--muted); margin-left: auto; }
+.rev-urgency-high   { display:inline-block; padding:2px 8px; border-radius:5px; font-size:.66rem; font-weight:600; background:rgba(224,85,85,.15); color:var(--red); }
+.rev-urgency-medium { display:inline-block; padding:2px 8px; border-radius:5px; font-size:.66rem; font-weight:600; background:rgba(240,180,41,.12); color:var(--yellow); }
+.rev-urgency-low    { display:inline-block; padding:2px 8px; border-radius:5px; font-size:.66rem; font-weight:600; background:rgba(196,160,96,.12); color:var(--gold); }
+.rev-price-row { display: flex; gap: 18px; margin: 12px 0; flex-wrap: wrap; }
+.rev-price-item { display: flex; flex-direction: column; gap: 2px; }
+.rev-price-label { font-size: .66rem; color: var(--muted); text-transform: uppercase; }
+.rev-price-cur  { font-size: .82rem; color: var(--muted); text-decoration: line-through; }
+.rev-price-rec  { font-size: 1.05rem; font-weight: 700; color: var(--green); }
+.rev-price-pct  { font-size: .68rem; color: var(--green); }
+.rev-rec-analysis {
+  font-size: .82rem; color: var(--text); line-height: 1.65; margin: 10px 0;
+  padding: 10px 12px; background: rgba(255,255,255,.03);
+  border-radius: 7px; border-left: 2px solid var(--gold);
+}
+.rev-rec-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn-rev-accept {
+  padding: 6px 14px; border-radius: 7px; background: var(--green);
+  border: none; color: #fff; font-size: .78rem; font-family: inherit; cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-rev-accept:hover { opacity: .8; }
+.btn-rev-reject {
+  padding: 6px 14px; border-radius: 7px; background: none;
+  border: 1px solid var(--border); color: var(--muted); font-size: .78rem;
+  font-family: inherit; cursor: pointer; transition: all .15s;
+}
+.btn-rev-reject:hover { border-color: var(--red); color: var(--red); }
+.btn-rev-tg {
+  padding: 6px 14px; border-radius: 7px; background: none;
+  border: 1px solid rgba(34,139,230,.3); color: #6ab8f0; font-size: .78rem;
+  font-family: inherit; cursor: pointer; transition: all .15s;
+}
+.btn-rev-tg:hover { background: rgba(34,139,230,.1); }
+.rev-badge-accepted { display:inline-block; padding:2px 9px; background:rgba(76,175,61,.14); color:var(--green); border-radius:5px; font-size:.7rem; font-weight:600; }
+.rev-badge-rejected { display:inline-block; padding:2px 9px; background:rgba(255,255,255,.06); color:var(--muted); border-radius:5px; font-size:.7rem; }
+.rev-analyze-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.rev-empty { padding: 32px; text-align: center; color: var(--muted); font-size: .83rem; line-height: 1.8; }
+.rev-spinner { padding: 24px; text-align: center; color: var(--muted); font-size: .83rem; }
+.rev-comp-actions { display: flex; gap: 6px; }
+
 /* ─── SCROLLBARS ──────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -529,6 +621,9 @@ body {
       </div>
       <div class="nav-item" data-tab="dataset">
         <span class="nav-icon">📋</span> Датасет
+      </div>
+      <div class="nav-item" data-tab="revenue">
+        <span class="nav-icon">📈</span> Revenue AI
       </div>
     </div>
     <div class="sidenav-foot">
@@ -695,7 +790,110 @@ body {
       </div>
     </div>
 
-    <!-- ── PANEL 6: DATASET ── -->
+    <!-- ── PANEL 6: REVENUE AI ── -->
+    <div class="panel" id="panel-revenue">
+      <div class="panel-hd">
+        <span>📈</span>
+        <div>
+          <div style="font-size:.98rem;font-weight:600;">Revenue Management AI</div>
+          <div class="panel-hd-sub">Анализ конкурентов · Прогноз цен · Рекомендации Groq AI</div>
+        </div>
+      </div>
+      <div class="rev-body">
+        <div class="rev-tabs-row">
+          <button class="rev-tab-btn active" onclick="switchRevTab('dash',this)">📊 Дашборд</button>
+          <button class="rev-tab-btn" onclick="switchRevTab('competitors',this)">🔍 Конкуренты</button>
+          <button class="rev-tab-btn" onclick="switchRevTab('forecast',this)">📅 Прогноз 90 дней</button>
+          <button class="rev-tab-btn" onclick="switchRevTab('recs',this)">💡 Рекомендации AI</button>
+        </div>
+        <div class="rev-tab-content">
+
+          <!-- ── ТАБ: ДАШБОРД ── -->
+          <div class="rev-tab active" id="rev-tab-dash">
+            <div class="rev-stat-row" id="rev-stats">
+              <div class="stat-card"><div class="stat-card-label">🏨 Наша цена (стандарт)</div><div class="stat-card-val" id="rev-s-our">—</div><div class="stat-card-sub">Standard room</div></div>
+              <div class="stat-card"><div class="stat-card-label">📊 Среднее рынка</div><div class="stat-card-val" id="rev-s-avg">—</div><div class="stat-card-sub">по конкурентам</div></div>
+              <div class="stat-card"><div class="stat-card-label">⬇️ Мин. конкурент</div><div class="stat-card-val" id="rev-s-min">—</div><div class="stat-card-sub" id="rev-s-min-name">—</div></div>
+              <div class="stat-card"><div class="stat-card-label">⬆️ Макс. конкурент</div><div class="stat-card-val" id="rev-s-max">—</div><div class="stat-card-sub" id="rev-s-max-name">—</div></div>
+            </div>
+            <div class="rev-chart-wrap">
+              <div class="rev-chart-title">📈 Динамика цен — 14 дней (прогноз)</div>
+              <canvas id="rev-price-chart" style="width:100%;height:200px;display:block"></canvas>
+            </div>
+            <div class="section-title">Цены конкурентов сегодня</div>
+            <div class="rev-table-wrap">
+              <table class="rev-table">
+                <thead><tr><th>Отель</th><th>★</th><th>Standard</th><th>Superior</th><th>Suite</th><th>Обновлено</th></tr></thead>
+                <tbody id="rev-dash-table"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Загрузка…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- ── ТАБ: КОНКУРЕНТЫ ── -->
+          <div class="rev-tab" id="rev-tab-competitors">
+            <div class="rev-form">
+              <div class="section-title" style="margin-bottom:12px">➕ Добавить конкурента</div>
+              <div class="rev-form-row">
+                <div class="field grow"><label>Название отеля</label><input type="text" id="rc-name" placeholder="Hyatt Regency Dushanbe"></div>
+                <div class="field" style="min-width:60px"><label>Звёзды</label>
+                  <select id="rc-stars" style="padding:9px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.86rem;font-family:inherit;outline:none">
+                    <option value="5">★★★★★</option>
+                    <option value="4">★★★★</option>
+                    <option value="3">★★★</option>
+                  </select>
+                </div>
+                <div class="field grow"><label>Booking.com URL</label><input type="text" id="rc-url" placeholder="https://www.booking.com/hotel/tj/..."></div>
+                <button class="btn-save" style="margin-top:auto;padding:9px 16px" onclick="addRevCompetitor()">+ Добавить</button>
+              </div>
+            </div>
+            <div class="rev-table-wrap">
+              <table class="rev-table">
+                <thead><tr><th>Отель</th><th>★</th><th>URL</th><th></th></tr></thead>
+                <tbody id="rev-comp-list"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Загрузка…</td></tr></tbody>
+              </table>
+            </div>
+            <div class="rev-analyze-row">
+              <button class="btn-save" onclick="startRevAnalysis()">🔍 Проанализировать цены сейчас</button>
+            </div>
+          </div>
+
+          <!-- ── ТАБ: ПРОГНОЗ 90 ДНЕЙ ── -->
+          <div class="rev-tab" id="rev-tab-forecast">
+            <div class="rev-chart-wrap">
+              <div class="rev-chart-title">📅 Прогноз загрузки и рекомендуемых цен — 90 дней</div>
+              <canvas id="rev-forecast-chart" style="width:100%;height:200px;display:block"></canvas>
+            </div>
+            <div class="section-title">События и праздники</div>
+            <div class="rev-table-wrap">
+              <table class="rev-table">
+                <thead><tr><th>Дата</th><th>Событие</th><th>Влияние на цену</th><th></th></tr></thead>
+                <tbody id="rev-events-list"></tbody>
+              </table>
+            </div>
+            <div class="rev-event-add" id="rev-event-add-row">
+              <input type="date"  id="rev-ev-date"   placeholder="Дата">
+              <input type="text"  id="rev-ev-name"   placeholder="Название события" style="flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;font-family:inherit;outline:none">
+              <input type="text"  id="rev-ev-impact" placeholder="+20%" style="width:80px;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.82rem;font-family:inherit;outline:none">
+              <button class="btn-save" style="padding:8px 14px" onclick="addRevEvent()">+ Добавить</button>
+            </div>
+          </div>
+
+          <!-- ── ТАБ: РЕКОМЕНДАЦИИ ── -->
+          <div class="rev-tab" id="rev-tab-recs">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <button class="btn-outline" onclick="loadRevRecommendations()">↻ Обновить</button>
+              <button class="btn-save" onclick="startRevAnalysis()">🤖 Создать новую рекомендацию</button>
+            </div>
+            <div id="rev-recs-list">
+              <div class="rev-empty">Загрузка…</div>
+            </div>
+          </div>
+
+        </div><!-- /rev-tab-content -->
+      </div><!-- /rev-body -->
+    </div><!-- /panel-revenue -->
+
+    <!-- ── PANEL 7: DATASET ── -->
     <div class="panel" id="panel-dataset">
       <div class="panel-hd">
         <span>📋</span>
@@ -798,6 +996,7 @@ function switchTab(tab) {
   });
   if (tab === "hotel"   && !hotelLoaded)    loadHotelInfo();
   if (tab === "dataset" && !scenariosLoaded) loadScenarios();
+  if (tab === "revenue" && !revLoaded)      { revLoaded = true; initRevenue(); }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1356,6 +1555,458 @@ function plural(n, one, few, many) {
   if (m10 === 1 && m100 !== 11) return n + " " + one;
   if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return n + " " + few;
   return n + " " + many;
+}
+
+// ═══════════════════════════════════════════════════
+// REVENUE AI
+// ═══════════════════════════════════════════════════
+let revLoaded       = false;
+let revCompetitors  = [];
+let revEvents       = [];
+let revCurrentTab   = 'dash';
+
+// ── Sub-tab navigation ─────────────────────────────
+function switchRevTab(tab, btn) {
+  revCurrentTab = tab;
+  document.querySelectorAll('.rev-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.rev-tab').forEach(el =>
+    el.classList.toggle('active', el.id === 'rev-tab-' + tab)
+  );
+  if (tab === 'dash')        loadRevDashboard();
+  if (tab === 'competitors') loadRevCompetitors();
+  if (tab === 'forecast')    loadRevForecast();
+  if (tab === 'recs')        loadRevRecommendations();
+}
+
+function initRevenue() {
+  loadRevDashboard();
+}
+
+// ── Dashboard ──────────────────────────────────────
+async function loadRevDashboard() {
+  try {
+    const [comps, recs, facts] = await Promise.all([
+      api('/api/admin/revenue/competitors').catch(() => []),
+      api('/api/admin/revenue/recommendations').catch(() => []),
+      api('/api/admin/hotel-info').catch(() => ({})),
+    ]);
+    const ourStd = facts?.prices?.rooms?.standard || 80;
+    revCompetitors = comps;
+    renderRevStats(comps, ourStd, recs);
+    drawRevPriceChart(comps, ourStd);
+    renderRevDashTable(comps, facts);
+  } catch(e) {
+    document.getElementById('rev-stats').innerHTML =
+      `<div style="color:var(--red);grid-column:1/-1">Ошибка: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderRevStats(comps, ourStd, recs) {
+  const prices = comps.map(c => c.lastPrice?.standard || 0).filter(p => p > 0);
+  const avg  = prices.length ? Math.round(prices.reduce((a,b)=>a+b,0)/prices.length) : '—';
+  const minP = prices.length ? Math.min(...prices) : null;
+  const maxP = prices.length ? Math.max(...prices) : null;
+  const minC = minP ? (comps.find(c => (c.lastPrice?.standard||0) === minP)?.name || '—') : '—';
+  const maxC = maxP ? (comps.find(c => (c.lastPrice?.standard||0) === maxP)?.name || '—') : '—';
+
+  document.getElementById('rev-s-our').textContent  = '$' + ourStd;
+  document.getElementById('rev-s-avg').textContent  = avg === '—' ? '—' : '$' + avg;
+  document.getElementById('rev-s-min').textContent  = minP ? '$' + minP : '—';
+  document.getElementById('rev-s-max').textContent  = maxP ? '$' + maxP : '—';
+  document.getElementById('rev-s-min-name').textContent = minC.split(' ')[0];
+  document.getElementById('rev-s-max-name').textContent = maxC.split(' ')[0];
+}
+
+function renderRevDashTable(comps, facts) {
+  const ourStd = facts?.prices?.rooms?.standard || 80;
+  const ourSup = facts?.prices?.rooms?.superior  || 120;
+  const ourSuite = facts?.prices?.rooms?.suite   || 200;
+  const tbody = document.getElementById('rev-dash-table');
+
+  const rows = [
+    `<tr class="rev-our-row">
+      <td>★ AMMAR Hotel</td><td>★★★★★</td>
+      <td>$${ourStd}</td><td>$${ourSup}</td><td>$${ourSuite}</td>
+      <td style="color:var(--green)">Сейчас</td>
+    </tr>`
+  ];
+
+  comps.forEach(c => {
+    const p = c.lastPrice || {};
+    const stars = '★'.repeat(c.stars || 4);
+    rows.push(`<tr>
+      <td>${esc(c.name)}</td>
+      <td style="font-size:.75rem;color:var(--yellow)">${stars}</td>
+      <td>${p.standard ? '$'+p.standard : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${p.superior ? '$'+p.superior : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${p.suite    ? '$'+p.suite    : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:.72rem;color:var(--muted)">${p.updatedAt ? fmtTime(p.updatedAt) : 'не получено'}</td>
+    </tr>`);
+  });
+
+  tbody.innerHTML = rows.join('');
+}
+
+// ── Canvas chart ────────────────────────────────────
+function drawRevPriceChart(comps, ourStd) {
+  const canvas = document.getElementById('rev-price-chart');
+  if (!canvas) return;
+  const days = 14;
+  const labels = Array.from({length:days}, (_,i) => {
+    const d = new Date(Date.now() + i*86400000);
+    return `${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+  });
+  function genLine(base) {
+    return Array.from({length:days}, (_,i) => {
+      const d = new Date(Date.now() + i*86400000);
+      const wknd = [0,6].includes(d.getDay()) ? 1.12 : 1;
+      return Math.round(base * wknd * (0.92 + Math.random()*0.16));
+    });
+  }
+  const datasets = [
+    { label:'AMMAR Hotel', data: genLine(ourStd), color:'#C4A060', lineWidth:2.5, alpha:1 }
+  ];
+  const compColors = ['#4a5a7a','#5a7a9a','#3a4a6a','#6a8aaa','#2a3a5a'];
+  comps.slice(0,5).forEach((c,i) => {
+    const base = c.lastPrice?.standard || (60 + i*15 + Math.random()*30);
+    datasets.push({ label: c.name.split(' ')[0], data: genLine(base), color: compColors[i], lineWidth:1.5, alpha:0.7 });
+  });
+  revDrawLineChart(canvas, datasets, labels);
+}
+
+function revDrawLineChart(canvas, datasets, labels) {
+  const dpr  = window.devicePixelRatio || 1;
+  const W    = canvas.offsetWidth || 700;
+  const H    = 200;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  const pad = { top:22, right:14, bottom:34, left:50 };
+  const w = canvas.width, h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = '#162640';
+  ctx.fillRect(0, 0, w, h);
+
+  const allV = datasets.flatMap(d=>d.data).filter(v=>v>0);
+  if (!allV.length) return;
+  const minV = Math.max(0, Math.min(...allV) * 0.88);
+  const maxV = Math.max(...allV) * 1.1;
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const xp = i => pad.left + (i/(labels.length-1))*cw;
+  const yp = v => pad.top + ch - ((v-minV)/(maxV-minV))*ch;
+
+  ctx.setLineDash([4*dpr, 4*dpr]);
+  ctx.strokeStyle = 'rgba(196,160,96,0.1)';
+  ctx.lineWidth = dpr;
+  for (let i=0; i<=4; i++) {
+    const yv = pad.top + (i/4)*ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, yv); ctx.lineTo(w-pad.right, yv); ctx.stroke();
+    const val = Math.round(maxV - (i/4)*(maxV-minV));
+    ctx.fillStyle = '#5a6a80'; ctx.font = `${10*dpr}px Inter,sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText('$'+val, pad.left-6, yv+4);
+  }
+  ctx.setLineDash([]);
+
+  const step = Math.max(1, Math.floor(labels.length/7));
+  labels.forEach((lbl,i) => {
+    if (i%step===0) {
+      ctx.fillStyle='#5a6a80'; ctx.font=`${9*dpr}px Inter,sans-serif`;
+      ctx.textAlign='center'; ctx.fillText(lbl, xp(i), h-8);
+    }
+  });
+
+  datasets.forEach(ds => {
+    ctx.strokeStyle = ds.color; ctx.lineWidth = (ds.lineWidth||2)*dpr;
+    ctx.globalAlpha = ds.alpha || 1;
+    ctx.beginPath();
+    ds.data.forEach((v,i) => { if(i===0) ctx.moveTo(xp(i),yp(v)); else ctx.lineTo(xp(i),yp(v)); });
+    ctx.stroke(); ctx.globalAlpha = 1;
+  });
+
+  let lx = pad.left;
+  datasets.forEach(ds => {
+    ctx.strokeStyle=ds.color; ctx.lineWidth=2*dpr;
+    ctx.beginPath(); ctx.moveTo(lx,14); ctx.lineTo(lx+16,14); ctx.stroke();
+    ctx.fillStyle='#c8c0b0'; ctx.font=`${9*dpr}px Inter,sans-serif`;
+    ctx.textAlign='left'; ctx.fillText(ds.label, lx+20, 18);
+    lx += ctx.measureText(ds.label).width + 44;
+  });
+}
+
+// ── Competitors tab ────────────────────────────────
+async function loadRevCompetitors() {
+  try {
+    revCompetitors = await api('/api/admin/revenue/competitors');
+    renderRevCompList();
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+function renderRevCompList() {
+  const tbody = document.getElementById('rev-comp-list');
+  if (!revCompetitors.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:18px">Нет конкурентов</td></tr>';
+    return;
+  }
+  tbody.innerHTML = revCompetitors.map((c,i) => {
+    const stars = '★'.repeat(c.stars||4);
+    return `<tr>
+      <td>${esc(c.name)}</td>
+      <td style="font-size:.72rem;color:var(--yellow)">${stars}</td>
+      <td style="font-size:.72rem;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.bookingUrl||c.url||'—')}</td>
+      <td><button class="btn-sm" onclick="deleteRevComp(${i})">✕ Удалить</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function addRevCompetitor() {
+  const name  = document.getElementById('rc-name')?.value?.trim();
+  const stars = parseInt(document.getElementById('rc-stars')?.value) || 4;
+  const url   = document.getElementById('rc-url')?.value?.trim() || '';
+  if (!name) { toast('❌ Введите название отеля'); return; }
+  const newComp = { id: 'comp-'+Date.now(), name, stars, bookingUrl: url, url: '' };
+  revCompetitors.push(newComp);
+  try {
+    await api('/api/admin/revenue/competitors', { method:'POST', body: JSON.stringify(revCompetitors) });
+    toast('✅ Конкурент добавлен: '+name);
+    document.getElementById('rc-name').value = '';
+    document.getElementById('rc-url').value  = '';
+    renderRevCompList();
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+async function deleteRevComp(i) {
+  if (!confirm('Удалить конкурента "'+revCompetitors[i]?.name+'"?')) return;
+  revCompetitors.splice(i, 1);
+  try {
+    await api('/api/admin/revenue/competitors', { method:'POST', body: JSON.stringify(revCompetitors) });
+    toast('🗑 Удалён');
+    renderRevCompList();
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+// ── Analyze ─────────────────────────────────────────
+async function startRevAnalysis() {
+  const listEl = document.getElementById('rev-recs-list');
+  if (listEl) listEl.innerHTML = '<div class="rev-spinner">⏳ AI анализирует рынок… (10-30 сек)</div>';
+  switchTab('revenue');
+  document.querySelector('.rev-tab-btn[onclick*="recs"]')?.click();
+  toast('⏳ Запускаю AI анализ…', 5000);
+  try {
+    const r = await api('/api/admin/revenue/analyze', { method:'POST', body:'{}' });
+    if (r.ok && r.recommendation) {
+      toast('✅ Рекомендация готова!', 4000);
+      loadRevRecommendations();
+    } else {
+      toast('❌ ' + (r.error || 'Ошибка анализа'));
+      if (listEl) listEl.innerHTML = `<div class="rev-empty">❌ ${esc(r.error||'Ошибка')}</div>`;
+    }
+  } catch(e) {
+    toast('❌ '+e.message);
+    if (listEl) listEl.innerHTML = `<div class="rev-empty">❌ ${esc(e.message)}</div>`;
+  }
+}
+
+// ── Forecast tab ─────────────────────────────────────
+async function loadRevForecast() {
+  try {
+    revEvents = await api('/api/admin/revenue/events').catch(() => []);
+    const facts = await api('/api/admin/hotel-info').catch(() => ({}));
+    const ourStd = facts?.prices?.rooms?.standard || 80;
+    renderRevEvents();
+    drawRevForecastChart(revEvents, ourStd);
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+function renderRevEvents() {
+  const tbody = document.getElementById('rev-events-list');
+  if (!revEvents.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:14px">Нет событий</td></tr>';
+    return;
+  }
+  tbody.innerHTML = revEvents.map((e,i) =>
+    `<tr>
+      <td>${esc(e.date)}</td>
+      <td>${esc(e.name)}</td>
+      <td style="color:var(--green);font-weight:600">${esc(e.impact)}</td>
+      <td><button class="btn-sm" onclick="deleteRevEvent(${i})">✕</button></td>
+    </tr>`
+  ).join('');
+}
+
+async function addRevEvent() {
+  const date   = document.getElementById('rev-ev-date')?.value;
+  const name   = document.getElementById('rev-ev-name')?.value?.trim();
+  const impact = document.getElementById('rev-ev-impact')?.value?.trim();
+  if (!date || !name) { toast('❌ Заполните дату и название'); return; }
+  revEvents.push({ date, name, impact: impact || '+10%' });
+  revEvents.sort((a,b) => a.date.localeCompare(b.date));
+  await saveRevEvents();
+  document.getElementById('rev-ev-date').value   = '';
+  document.getElementById('rev-ev-name').value   = '';
+  document.getElementById('rev-ev-impact').value = '';
+  renderRevEvents();
+}
+
+async function deleteRevEvent(i) {
+  revEvents.splice(i, 1);
+  await saveRevEvents();
+  renderRevEvents();
+}
+
+async function saveRevEvents() {
+  try {
+    await api('/api/admin/revenue/events', { method:'POST', body: JSON.stringify(revEvents) });
+    toast('✅ События сохранены');
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+function drawRevForecastChart(events, ourStd) {
+  const canvas = document.getElementById('rev-forecast-chart');
+  if (!canvas) return;
+  const days = 90;
+  const labels = Array.from({length:days}, (_,i) => {
+    const d = new Date(Date.now() + i*86400000);
+    return i%7===0 ? `${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}` : '';
+  });
+
+  // Build occupancy + price forecast
+  const occupancy = Array.from({length:days}, (_,i) => {
+    const d = new Date(Date.now() + i*86400000);
+    const isWknd = [0,6].includes(d.getDay());
+    const ds = d.toISOString().slice(0,10);
+    const ev = events.find(e => e.date === ds);
+    const base = 55 + (isWknd ? 15 : 0) + (ev ? 25 : 0);
+    return Math.min(100, base + Math.round((Math.random()-0.5)*10));
+  });
+
+  const prices = occupancy.map((occ,i) => {
+    const ev = events.find(e => e.date === new Date(Date.now()+i*86400000).toISOString().slice(0,10));
+    const evMult = ev ? 1 + parseInt(ev.impact)/100 : 1;
+    const occMult = occ >= 80 ? 1.25 : occ >= 65 ? 1.1 : 1.0;
+    return Math.round(ourStd * evMult * occMult);
+  });
+
+  const datasets = [
+    { label:'Рек. цена ($)', data: prices,    color:'#C4A060', lineWidth:2, alpha:1 },
+    { label:'Загрузка (%)', data: occupancy,  color:'#4a8aff', lineWidth:1.5, alpha:0.8 },
+  ];
+
+  revDrawLineChart(canvas, datasets, labels);
+}
+
+// ── Recommendations tab ──────────────────────────────
+async function loadRevRecommendations() {
+  const listEl = document.getElementById('rev-recs-list');
+  try {
+    const recs = await api('/api/admin/revenue/recommendations');
+    if (!recs.length) {
+      listEl.innerHTML = `<div class="rev-empty">📭 Рекомендаций пока нет.<br>Нажмите <b>«Создать новую рекомендацию»</b> для AI-анализа.</div>`;
+      return;
+    }
+    listEl.innerHTML = recs.map(rec => renderRevRec(rec)).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div class="rev-empty" style="color:var(--red)">Ошибка: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderRevRec(rec) {
+  const urgCls = { high:'rev-urgency-high', medium:'rev-urgency-medium', low:'rev-urgency-low' }[rec.urgency||'low'];
+  const urgLbl = { high:'🔴 Срочно', medium:'🟡 Важно', low:'🟢 Плановое' }[rec.urgency||'low'];
+
+  function priceDiff(cur, rec) {
+    if (!cur || !rec) return '';
+    const pct = Math.round((rec-cur)/cur*100);
+    return `<span class="rev-price-pct">${pct>0?'+':''}${pct}%</span>`;
+  }
+
+  const statusBadge = rec.status === 'accepted'
+    ? `<span class="rev-badge-accepted">✅ Принято</span>`
+    : rec.status === 'rejected'
+    ? `<span class="rev-badge-rejected">❌ Отклонено</span>`
+    : '';
+
+  const actions = rec.status === 'pending' ? `
+    <div class="rev-rec-actions">
+      <button class="btn-rev-accept" onclick="revDecide('${esc(rec.id)}','accepted')">✅ Принять</button>
+      <button class="btn-rev-reject" onclick="revDecide('${esc(rec.id)}','rejected')">❌ Отклонить</button>
+      <button class="btn-rev-tg"     onclick="revSendTg('${esc(rec.id)}')">📤 Отправить GM</button>
+    </div>` : `<div style="margin-top:10px;font-size:.72rem;color:var(--muted)">${rec.decidedAt ? 'Решение: '+fmtTime(rec.decidedAt) : ''}</div>`;
+
+  const compText = (rec.competitors||[]).filter(c=>c.standard>0)
+    .map(c=>`<b>${c.hotel.split(' ')[0]}</b>: $${c.standard}`)
+    .join(' · ') || 'Нет данных';
+
+  return `<div class="rev-rec-card ${rec.status!=='pending'?rec.status:''}">
+    <div class="rev-rec-hd">
+      <span class="rev-rec-id">📊 ${esc(rec.id)}</span>
+      <span class="${urgCls}">${urgLbl}</span>
+      ${statusBadge}
+      <span class="rev-rec-date">${fmtTime(rec.date)}</span>
+    </div>
+    <div><b>📅 Период:</b> ${esc(rec.period)}</div>
+    <div style="margin-top:4px;font-size:.83rem;color:var(--muted)">${esc(rec.reason)}</div>
+    <div class="rev-price-row">
+      <div class="rev-price-item">
+        <div class="rev-price-label">Standard</div>
+        <div class="rev-price-cur">$${rec.current?.standard||'—'}</div>
+        <div class="rev-price-rec">$${rec.recommended?.standard||'—'}</div>
+        ${priceDiff(rec.current?.standard, rec.recommended?.standard)}
+      </div>
+      <div class="rev-price-item">
+        <div class="rev-price-label">Superior</div>
+        <div class="rev-price-cur">$${rec.current?.superior||'—'}</div>
+        <div class="rev-price-rec">$${rec.recommended?.superior||'—'}</div>
+        ${priceDiff(rec.current?.superior, rec.recommended?.superior)}
+      </div>
+      <div class="rev-price-item">
+        <div class="rev-price-label">Suite</div>
+        <div class="rev-price-cur">$${rec.current?.suite||'—'}</div>
+        <div class="rev-price-rec">$${rec.recommended?.suite||'—'}</div>
+        ${priceDiff(rec.current?.suite, rec.recommended?.suite)}
+      </div>
+    </div>
+    <div class="rev-rec-analysis">${esc(rec.analysis)}</div>
+    <div style="font-size:.74rem;color:var(--muted)">📈 Конкуренты: ${compText}</div>
+    ${actions}
+  </div>`;
+}
+
+async function revDecide(id, status) {
+  try {
+    await api('/api/admin/revenue/decision/'+encodeURIComponent(id), {
+      method:'POST', body: JSON.stringify({ status })
+    });
+    if (status === 'accepted') {
+      const rec = (await api('/api/admin/revenue/recommendations')).find(r=>r.id===id);
+      if (rec?.recommended) {
+        toast(`✅ Принято! Установите в CheckInn: Standard $${rec.recommended.standard}, Superior $${rec.recommended.superior}, Suite $${rec.recommended.suite}`, 7000);
+      } else {
+        toast('✅ Рекомендация принята');
+      }
+    } else {
+      toast('❌ Рекомендация отклонена');
+    }
+    loadRevRecommendations();
+  } catch(e) { toast('❌ '+e.message); }
+}
+
+function revSendTg(id) {
+  api('/api/admin/revenue/recommendations')
+    .then(recs => {
+      const rec = recs.find(r => r.id === id);
+      if (!rec) return;
+      const text = `📊 Revenue AI\n📅 ${rec.period}\n${rec.reason}\nStandard: $${rec.current?.standard} → $${rec.recommended?.standard}\nSuperior: $${rec.current?.superior} → $${rec.recommended?.superior}\nSuite: $${rec.current?.suite} → $${rec.recommended?.suite}\n\n${rec.analysis}`;
+      navigator.clipboard.writeText(text)
+        .then(() => toast('📋 Текст скопирован! Вставьте в Telegram GM'))
+        .catch(() => toast('📋 Скопируйте вручную: ' + rec.id));
+    })
+    .catch(e => toast('❌ '+e.message));
 }
 
 // ═══════════════════════════════════════════════════
