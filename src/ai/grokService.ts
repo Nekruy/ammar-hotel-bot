@@ -19,7 +19,7 @@ const LANG_KEY: Record<string, string> = {
   russian: "ru", tajik: "tj", english: "en", chinese: "cn",
 };
 
-function findScenario(message: string, language: string): string | null {
+function findScenario(message: string, language: string): { reply: string; id: string } | null {
   try {
     const raw = fs.readFileSync(SCENARIOS_PATH, "utf8");
     const { scenarios = [] } = JSON.parse(raw);
@@ -28,11 +28,56 @@ function findScenario(message: string, language: string): string | null {
     for (const sc of scenarios) {
       const triggers: string[] = sc.triggers || [];
       if (triggers.some((t: string) => msg.includes(t.toLowerCase()))) {
-        return sc.responses?.[key] || null;
+        const reply = sc.responses?.[key];
+        if (reply) return { reply, id: sc.id as string };
       }
     }
   } catch { /* файл не найден или повреждён */ }
   return null;
+}
+
+// Уведомляем персонал для action-сценариев (taxi, housekeeping)
+// Вызывается fire-and-forget параллельно с возвратом ответа гостю
+async function fireScenarioActions(msg: string, guest: GuestCtx): Promise<void> {
+  const m = msg.toLowerCase();
+  try {
+    // Такси / трансфер / аэропорт
+    if (m.includes("такси") || m.includes("трансфер") || m.includes("аэропорт") ||
+        m.includes("airport") || m.includes("transfer") || m.includes("фурудгоҳ") || m.includes("机场")) {
+      const isAirport = m.includes("аэропорт") || m.includes("airport") || m.includes("фурудгоҳ") || m.includes("机场");
+      await executeToolCall("arrange_taxi", {
+        room_number: guest.roomNumber,
+        destination:  isAirport ? "Аэропорт Душанбе" : "уточнить",
+        pickup_time:  "уточнить у гостя",
+        taxi_type:    isAirport ? "airport_transfer" : "standard",
+        passengers:   1,
+      }, guest);
+      return; // один тип уведомления за раз
+    }
+    // Полотенца
+    if (m.includes("полотенц") || m.includes("towel") || m.includes("рӯймол")) {
+      await executeToolCall("create_housekeeping", {
+        room_number: guest.roomNumber, task_type: "towels", priority: "normal",
+      }, guest);
+      return;
+    }
+    // Фен
+    if (m.includes("фен") || m.includes("hairdryer")) {
+      await executeToolCall("create_housekeeping", {
+        room_number: guest.roomNumber, task_type: "hairdryer", priority: "normal",
+      }, guest);
+      return;
+    }
+    // Тапочки
+    if (m.includes("тапочк") || m.includes("slipper")) {
+      await executeToolCall("create_housekeeping", {
+        room_number: guest.roomNumber, task_type: "slippers", priority: "normal",
+      }, guest);
+      return;
+    }
+  } catch (e: any) {
+    logger.warn("fireScenarioActions error", { err: e.message });
+  }
 }
 
 // Groq использует OpenAI-совместимый API
@@ -106,13 +151,16 @@ export async function chat(
 ): Promise<{ reply: string; updatedHistory: Message[] }> {
 
   // Проверяем датасет — если нашли готовый ответ, не тратим токены Groq
-  const scenarioReply = findScenario(userMessage, guest.language);
-  if (scenarioReply) {
+  const scenarioHit = findScenario(userMessage, guest.language);
+  if (scenarioHit) {
+    // Шлём уведомление персоналу параллельно (fire & forget — не блокируем ответ)
+    fireScenarioActions(userMessage, guest).catch(() => {});
+
     const now = new Date().toISOString();
     const updatedHistory: Message[] = [
       ...history,
       { role: "user" as const,      content: userMessage, time: now },
-      { role: "assistant" as const, content: scenarioReply, time: now },
+      { role: "assistant" as const, content: scenarioHit.reply, time: now },
     ].slice(-20);
     incMessages();
     broadcastEvent("message", {
@@ -122,11 +170,11 @@ export async function chat(
       language:   guest.language,
       guestName:  guest.guestName,
       userMessage,
-      botReply:   scenarioReply,
+      botReply:   scenarioHit.reply,
       time:       now,
     });
-    logger.info("📋 Scenario hit — Groq skipped", { room: guest.roomNumber });
-    return { reply: scenarioReply, updatedHistory };
+    logger.info(`✅ Датасет: ${scenarioHit.id} (экономия токенов)`, { room: guest.roomNumber });
+    return { reply: scenarioHit.reply, updatedHistory };
   }
 
   const systemFull = buildSystem(guest);
