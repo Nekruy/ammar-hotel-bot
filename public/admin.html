@@ -823,8 +823,8 @@ body {
             <div class="section-title">Цены конкурентов сегодня</div>
             <div class="rev-table-wrap">
               <table class="rev-table">
-                <thead><tr><th>Отель</th><th>★</th><th>Standard</th><th>Superior</th><th>Suite</th><th>Обновлено</th></tr></thead>
-                <tbody id="rev-dash-table"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Загрузка…</td></tr></tbody>
+                <thead><tr><th>Отель</th><th>★</th><th>Standard</th><th>Superior</th><th>Suite</th><th>Источник</th><th>Обновлено</th></tr></thead>
+                <tbody id="rev-dash-table"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Загрузка…</td></tr></tbody>
               </table>
             </div>
           </div>
@@ -1593,54 +1593,65 @@ async function loadRevDashboard() {
     ]);
     const ourStd = facts?.prices?.rooms?.standard || 80;
     revCompetitors = comps;
-    renderRevStats(comps, ourStd, recs);
-    drawRevPriceChart(comps, ourStd);
-    renderRevDashTable(comps, facts);
+    const latestPrices = (recs[0]?.competitors) || [];
+    renderRevStats(comps, ourStd, recs, latestPrices);
+    drawRevPriceChart(comps, ourStd, latestPrices);
+    renderRevDashTable(comps, facts, latestPrices);
   } catch(e) {
     document.getElementById('rev-stats').innerHTML =
       `<div style="color:var(--red);grid-column:1/-1">Ошибка: ${esc(e.message)}</div>`;
   }
 }
 
-function renderRevStats(comps, ourStd, recs) {
-  const prices = comps.map(c => c.lastPrice?.standard || 0).filter(p => p > 0);
-  const avg  = prices.length ? Math.round(prices.reduce((a,b)=>a+b,0)/prices.length) : '—';
-  const minP = prices.length ? Math.min(...prices) : null;
-  const maxP = prices.length ? Math.max(...prices) : null;
-  const minC = minP ? (comps.find(c => (c.lastPrice?.standard||0) === minP)?.name || '—') : '—';
-  const maxC = maxP ? (comps.find(c => (c.lastPrice?.standard||0) === maxP)?.name || '—') : '—';
+function renderRevStats(comps, ourStd, recs, latestPrices) {
+  const priceList = (latestPrices && latestPrices.length)
+    ? latestPrices.map(p => p.standard || 0).filter(p => p > 0)
+    : comps.map(c => c.lastPrice?.standard || 0).filter(p => p > 0);
+  const avg  = priceList.length ? Math.round(priceList.reduce((a,b)=>a+b,0)/priceList.length) : '—';
+  const minP = priceList.length ? Math.min(...priceList) : null;
+  const maxP = priceList.length ? Math.max(...priceList) : null;
+  const findName = (p) => (latestPrices && latestPrices.find(x => x.standard === p)?.hotel)
+    || comps.find(c => (c.lastPrice?.standard||0) === p)?.name || '—';
+  const minC = minP ? findName(minP) : '—';
+  const maxC = maxP ? findName(maxP) : '—';
 
   document.getElementById('rev-s-our').textContent  = '$' + ourStd;
   document.getElementById('rev-s-avg').textContent  = avg === '—' ? '—' : '$' + avg;
   document.getElementById('rev-s-min').textContent  = minP ? '$' + minP : '—';
   document.getElementById('rev-s-max').textContent  = maxP ? '$' + maxP : '—';
-  document.getElementById('rev-s-min-name').textContent = minC.split(' ')[0];
-  document.getElementById('rev-s-max-name').textContent = maxC.split(' ')[0];
+  document.getElementById('rev-s-min-name').textContent = String(minC).split(' ')[0];
+  document.getElementById('rev-s-max-name').textContent = String(maxC).split(' ')[0];
 }
 
-function renderRevDashTable(comps, facts) {
-  const ourStd = facts?.prices?.rooms?.standard || 80;
-  const ourSup = facts?.prices?.rooms?.superior  || 120;
-  const ourSuite = facts?.prices?.rooms?.suite   || 200;
+function renderRevDashTable(comps, facts, latestPrices) {
+  const ourStd  = facts?.prices?.rooms?.standard || 80;
+  const ourSup  = facts?.prices?.rooms?.superior  || 120;
+  const ourSuite = facts?.prices?.rooms?.suite    || 200;
   const tbody = document.getElementById('rev-dash-table');
 
   const rows = [
     `<tr class="rev-our-row">
       <td>★ AMMAR Hotel</td><td>★★★★★</td>
       <td>$${ourStd}</td><td>$${ourSup}</td><td>$${ourSuite}</td>
+      <td style="color:var(--green);font-size:.8rem">🏨 Прямые</td>
       <td style="color:var(--green)">Сейчас</td>
     </tr>`
   ];
 
   comps.forEach(c => {
-    const p = c.lastPrice || {};
+    // Prefer live price from latest AI analysis, fall back to stored lastPrice
+    const lp = (latestPrices || []).find(x => x.hotel === c.name);
+    const p  = lp || c.lastPrice || {};
     const stars = '★'.repeat(c.stars || 4);
+    const srcIcon = lp?.sourceIcon || '📋';
+    const srcName = lp?.source     || 'Оценочные данные';
     rows.push(`<tr>
       <td>${esc(c.name)}</td>
       <td style="font-size:.75rem;color:var(--yellow)">${stars}</td>
       <td>${p.standard ? '$'+p.standard : '<span style="color:var(--muted)">—</span>'}</td>
       <td>${p.superior ? '$'+p.superior : '<span style="color:var(--muted)">—</span>'}</td>
       <td>${p.suite    ? '$'+p.suite    : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:.78rem;color:var(--muted)" title="${esc(srcName)}">${srcIcon} ${esc(srcName)}</td>
       <td style="font-size:.72rem;color:var(--muted)">${p.updatedAt ? fmtTime(p.updatedAt) : 'не получено'}</td>
     </tr>`);
   });
@@ -1649,7 +1660,7 @@ function renderRevDashTable(comps, facts) {
 }
 
 // ── Canvas chart ────────────────────────────────────
-function drawRevPriceChart(comps, ourStd) {
+function drawRevPriceChart(comps, ourStd, latestPrices) {
   const canvas = document.getElementById('rev-price-chart');
   if (!canvas) return;
   const days = 14;
@@ -1669,7 +1680,8 @@ function drawRevPriceChart(comps, ourStd) {
   ];
   const compColors = ['#4a5a7a','#5a7a9a','#3a4a6a','#6a8aaa','#2a3a5a'];
   comps.slice(0,5).forEach((c,i) => {
-    const base = c.lastPrice?.standard || (60 + i*15 + Math.random()*30);
+    const lp = (latestPrices || []).find(x => x.hotel === c.name);
+    const base = lp?.standard || c.lastPrice?.standard || (60 + i*15 + Math.random()*30);
     datasets.push({ label: c.name.split(' ')[0], data: genLine(base), color: compColors[i], lineWidth:1.5, alpha:0.7 });
   });
   revDrawLineChart(canvas, datasets, labels);

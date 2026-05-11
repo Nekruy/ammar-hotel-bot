@@ -8,6 +8,8 @@ export interface CompetitorPrice {
   suite:     number;
   currency:  string;
   source:    string;
+  sourceUrl: string;
+  sourceIcon: string;
   updatedAt: string;
 }
 
@@ -20,20 +22,35 @@ const MOCK_BASES: Record<string, { standard: number; superior: number; suite: nu
   'Grand Anzob Hotel':      { standard: 65,  superior: 90,  suite: 140 },
 };
 
+// Seed daily variation by date so prices are stable within a day
 function vary(v: number, pct = 0.15): number {
-  return Math.round(v * (1 - pct + Math.random() * pct * 2));
+  const seed = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const pseudo = (parseInt(seed) * v) % 1000 / 1000;
+  return Math.round(v * (1 - pct + pseudo * pct * 2));
 }
 
-function mockPrice(name: string, source: string): CompetitorPrice {
+function sourceLabel(url: string): { source: string; icon: string } {
+  if (!url || url === 'mock') return { source: 'Оценочные данные', icon: '📋' };
+  if (url.includes('booking.com'))  return { source: 'Booking.com',  icon: '📊' };
+  if (url.includes('expedia'))      return { source: 'Expedia',      icon: '✈️' };
+  if (url.includes('agoda'))        return { source: 'Agoda',        icon: '🏨' };
+  if (url.includes('hotels.com'))   return { source: 'Hotels.com',   icon: '🏩' };
+  return { source: 'Прямой сайт', icon: '🌐' };
+}
+
+function mockPrice(name: string, sourceUrl: string): CompetitorPrice {
   const base = MOCK_BASES[name] || { standard: 85, superior: 125, suite: 200 };
+  const { source, icon } = sourceLabel(sourceUrl);
   return {
-    hotel:     name,
-    standard:  vary(base.standard),
-    superior:  vary(base.superior),
-    suite:     vary(base.suite),
-    currency:  'USD',
+    hotel:      name,
+    standard:   vary(base.standard),
+    superior:   vary(base.superior),
+    suite:      vary(base.suite),
+    currency:   'USD',
     source,
-    updatedAt: new Date().toISOString(),
+    sourceUrl:  sourceUrl || 'mock',
+    sourceIcon: icon,
+    updatedAt:  new Date().toISOString(),
   };
 }
 
@@ -67,14 +84,17 @@ export async function parseBookingPrice(
       if (m) {
         const price = parseInt(m[1]);
         if (price > 20 && price < 2000) {
+          const { source, icon } = sourceLabel(hotelUrl);
           return {
-            hotel:     hotelName,
-            standard:  price,
-            superior:  Math.round(price * 1.45),
-            suite:     Math.round(price * 2.3),
-            currency:  'USD',
-            source:    hotelUrl,
-            updatedAt: new Date().toISOString(),
+            hotel:      hotelName,
+            standard:   price,
+            superior:   Math.round(price * 1.45),
+            suite:      Math.round(price * 2.3),
+            currency:   'USD',
+            source,
+            sourceUrl:  hotelUrl,
+            sourceIcon: icon,
+            updatedAt:  new Date().toISOString(),
           };
         }
       }
