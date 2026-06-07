@@ -4,8 +4,34 @@ import OpenAI from "openai";
 export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
 
   { type:"function", function:{ name:"get_booking",
-    description:"Информация о бронировании гостя — даты заезда/выезда, тип номера, статус. Вызывай если гость спрашивает о своей брони, датах, продлении.",
-    parameters:{ type:"object", properties:{ room_number:{type:"string"} }} }},
+    description:"Информация о бронировании гостя — даты заезда/выезда, тип номера, статус. Вызывай если гость спрашивает о своей брони, датах, продлении. Сначала пробует по booking_code (формат AMR-XXXXXXXX), затем по room_number.",
+    parameters:{ type:"object", properties:{
+      room_number:  { type:"string", description:"Номер комнаты гостя" },
+      booking_code: { type:"string", description:"Код бронирования формата AMR-XXXXXXXX" },
+    }} }},
+
+  { type:"function", function:{ name:"check_availability",
+    description:"Проверить доступность номеров на конкретные даты. Вызывай когда гость хочет узнать, есть ли свободные номера, до создания бронирования.",
+    parameters:{ type:"object", required:["check_in","check_out"],
+    properties:{
+      check_in:  { type:"string", description:"Дата заезда YYYY-MM-DD" },
+      check_out: { type:"string", description:"Дата выезда YYYY-MM-DD" },
+      guests:    { type:"number", description:"Количество гостей (по умолчанию 1)" },
+    }}}},
+
+  { type:"function", function:{ name:"create_booking",
+    description:"Создать новое бронирование для гостя. Вызывай ТОЛЬКО после check_availability и когда гость подтвердил выбор номера и тарифа. Обязательно получи от гостя: имя, даты, тип номера и тарифный план.",
+    parameters:{ type:"object", required:["check_in","check_out","room_type_id","rate_plan_id","guest_name"],
+    properties:{
+      check_in:     { type:"string", description:"Дата заезда YYYY-MM-DD" },
+      check_out:    { type:"string", description:"Дата выезда YYYY-MM-DD" },
+      room_type_id: { type:"string", description:"ID типа номера из check_availability" },
+      rate_plan_id: { type:"string", description:"ID тарифного плана из check_availability" },
+      guest_name:   { type:"string", description:"Полное имя гостя" },
+      phone:        { type:"string", description:"Телефон гостя (необязательно)" },
+      email:        { type:"string", description:"Email гостя (необязательно)" },
+      adults:       { type:"number", description:"Количество взрослых" },
+    }}}},
 
   { type:"function", function:{ name:"create_room_service",
     description:"Заказ еды и напитков в номер (07:00–23:00). ВЫЗЫВАЙ СРАЗУ когда гость упоминает еду, чай, кофе, воду, напитки или голод — без лишних уточнений.",

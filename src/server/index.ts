@@ -9,7 +9,7 @@ import rateLimit from "express-rate-limit";
 import { createTelegramBot, getTelegramBot } from "../bot/telegramHandler";
 import { notifyStaff }                       from "../integrations/staffNotifier";
 import { logger }                            from "../utils/logger";
-import { getAllSessions, getHistoryByKey }   from "../utils/redis";
+import { getAllSessions, getHistory }         from "../utils/redis";
 import { getStats }                          from "../utils/stats";
 import { addSSEClient, removeSSEClient }     from "../utils/adminEvents";
 import { getFullMenu, setFullMenu }          from "../utils/menuStore";
@@ -84,13 +84,13 @@ function adminAuth(req: Request, res: Response, next: NextFunction) {
 // ── Admin API routes ──────────────────────────────────────────────
 
 // GET /api/admin/guests — список активных сессий
-app.get("/api/admin/guests", adminAuth, (_req, res) => {
-  res.json(getAllSessions());
+app.get("/api/admin/guests", adminAuth, async (_req, res) => {
+  res.json(await getAllSessions());
 });
 
 // GET /api/admin/history/:sessionId — история диалога
-app.get("/api/admin/history/:sessionId", adminAuth, (req, res) => {
-  const history = getHistoryByKey(String(req.params.sessionId));
+app.get("/api/admin/history/:sessionId", adminAuth, async (req, res) => {
+  const history = await getHistory(String(req.params.sessionId));
   res.json(history);
 });
 

@@ -2,7 +2,7 @@
 
 import { GuestCtx }    from "../ai/grokService";
 import { notifyStaff } from "../integrations/staffNotifier";
-import { checkinn }    from "../integrations/checkinn";
+import { pmsClient }   from "../integrations/pmsClient";
 import { logger }      from "../utils/logger";
 import { prisma }      from "../utils/db";
 import cityGuide       from "../data/city_guide.json";
@@ -17,7 +17,9 @@ export async function executeToolCall(
   const room = input.room_number || guest.roomNumber || "N/A";
   try {
     switch (name) {
-      case "get_booking":            return await toolGetBooking(room, guest);
+      case "get_booking":            return await toolGetBooking(room, input.booking_code, guest);
+      case "check_availability":     return await toolCheckAvailability(input);
+      case "create_booking":         return await toolCreateBooking(input, guest);
       case "create_room_service":    return await toolRoomService(room, input, guest);
       case "create_housekeeping":    return await toolHousekeeping(room, input, guest);
       case "arrange_taxi":           return await toolTaxi(room, input);
@@ -41,8 +43,82 @@ export async function executeToolCall(
 }
 
 // ════════ 1. БРОНИРОВАНИЕ ════════════════════════════════════════
-async function toolGetBooking(room: string, _g: GuestCtx) {
-  return await checkinn.getBooking(room);
+async function toolGetBooking(roomNumber: string, bookingCode: string | undefined, _g: GuestCtx) {
+  // Try booking_code first; fall back to room number lookup for IN_HOUSE guests
+  if (bookingCode) {
+    const b = await pmsClient.getBookingByCode(bookingCode);
+    if (b) return b;
+  }
+  if (roomNumber && roomNumber !== "N/A") {
+    const b = await pmsClient.getActiveBookingByRoom(roomNumber);
+    if (b) return b;
+  }
+  return { found: false, note: "Бронирование не найдено. Попросите гостя уточнить код брони (формат AMR-XXXXXXXX) или номер комнаты." };
+}
+
+// ════════ 1b. ПРОВЕРКА ДОСТУПНОСТИ ═══════════════════════════════
+async function toolCheckAvailability(input: any) {
+  const { check_in, check_out, guests = 1 } = input;
+  if (!check_in || !check_out) {
+    return { error: "Укажите даты заезда и выезда" };
+  }
+  const results = await pmsClient.getAvailability(check_in, check_out, Number(guests));
+  if (results.length === 0) {
+    return { available: false, message: "На выбранные даты свободных номеров нет." };
+  }
+  return {
+    available: true,
+    nights:    results[0].nights,
+    options:   results.map(r => ({
+      roomTypeId:  r.roomTypeId,
+      name:        r.name,
+      capacity:    r.capacity,
+      available:   r.available,
+      from_price:  r.ratePlans[0]?.pricePerNight,
+      best_rate:   r.ratePlans[0],
+    })),
+  };
+}
+
+// ════════ 1c. СОЗДАНИЕ БРОНИРОВАНИЯ ══════════════════════════════
+async function toolCreateBooking(input: any, guest: GuestCtx) {
+  const { check_in, check_out, room_type_id, rate_plan_id, guest_name, phone, email, adults } = input;
+
+  if (!check_in || !check_out || !room_type_id || !rate_plan_id || !guest_name) {
+    return { error: "Не хватает данных: check_in, check_out, room_type_id, rate_plan_id, guest_name — все обязательны" };
+  }
+
+  const result = await pmsClient.createBooking({
+    checkIn:    check_in,
+    checkOut:   check_out,
+    roomTypeId: room_type_id,
+    ratePlanId: rate_plan_id,
+    fullName:   guest_name,
+    phone:      phone ?? guest.roomNumber,
+    email,
+    adults:     adults ?? 1,
+    language:   "ru",
+  });
+
+  if (!result) {
+    return { success: false, message: "Не удалось создать бронирование. Попробуйте ещё раз или обратитесь на ресепшн." };
+  }
+
+  await notifyStaff("reception", {
+    type:       "📋 НОВОЕ БРОНИРОВАНИЕ (бот)",
+    code:       result.code,
+    guest:      guest_name,
+    checkIn:    check_in,
+    checkOut:   check_out,
+    platform:   guest.platform,
+  });
+
+  return {
+    success:     true,
+    code:        result.code,
+    status:      result.status,
+    message:     `✅ Бронирование создано! Код: ${result.code}. Сохраните его — понадобится при заезде.`,
+  };
 }
 
 // ════════ 2. ROOM SERVICE ════════════════════════════════════════

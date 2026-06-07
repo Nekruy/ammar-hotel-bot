@@ -1,4 +1,7 @@
-// src/utils/redis.ts — Сессии и история в памяти (без Redis для быстрого старта)
+// src/utils/redis.ts — Sessions and conversation history via Redis (ioredis)
+
+import Redis from "ioredis";
+import { logger } from "./logger";
 
 export interface Session {
   guestId:        string;
@@ -15,40 +18,56 @@ export interface Session {
 export interface Message {
   role:    "user" | "assistant";
   content: string;
-  time?:   string; // ISO timestamp — заполняется с новыми сообщениями
+  time?:   string;
 }
 
-// In-memory хранилище
-const sessions  = new Map<string, Session>();
-const histories = new Map<string, Message[]>();
+const SESSION_TTL = 86400; // 24 hours
+const HISTORY_MAX = 20;    // last 20 messages (10 Q&A pairs)
+
+let _redis: Redis | null = null;
+
+function getRedis(): Redis {
+  if (!_redis) {
+    if (!process.env.REDIS_URL) throw new Error("REDIS_URL is not set");
+    _redis = new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: 3 });
+    _redis.on("error", (err) => logger.error("Redis error", { msg: err.message }));
+  }
+  return _redis;
+}
+
+const sk = (key: string) => `bot:session:${key}`;
+const hk = (key: string) => `bot:history:${key}`;
 
 export async function getSession(key: string): Promise<Session | null> {
-  return sessions.get(key) ?? null;
+  const raw = await getRedis().get(sk(key));
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
 export async function setSession(key: string, data: Session): Promise<void> {
-  sessions.set(key, data);
+  await getRedis().setex(sk(key), SESSION_TTL, JSON.stringify(data));
 }
 
 export async function updateSession(key: string, patch: Partial<Session>): Promise<void> {
-  const cur = sessions.get(key);
-  if (cur) sessions.set(key, { ...cur, ...patch });
+  const cur = await getSession(key);
+  if (cur) await setSession(key, { ...cur, ...patch });
 }
 
 export async function getHistory(key: string): Promise<Message[]> {
-  return histories.get(key) ?? [];
+  const raw = await getRedis().get(hk(key));
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
 }
 
-// Memory Buffer: хранит последние 20 сообщений (10 пар вопрос-ответ)
 export async function setHistory(key: string, history: Message[]): Promise<void> {
-  histories.set(key, history.slice(-20));
+  await getRedis().setex(hk(key), SESSION_TTL, JSON.stringify(history.slice(-HISTORY_MAX)));
 }
 
 export async function clearHistory(key: string): Promise<void> {
-  histories.delete(key);
+  await getRedis().del(hk(key));
 }
 
-// ── Для админ-панели ────────────────────────────────────────────────
+// ── Admin panel support ──────────────────────────────────────────
 
 export interface GuestEntry {
   key:         string;
@@ -59,29 +78,47 @@ export interface GuestEntry {
   isOnline:    boolean;
 }
 
-export function getAllSessions(): GuestEntry[] {
+export async function getAllSessions(): Promise<GuestEntry[]> {
+  const r = getRedis();
+  const keys = await r.keys("bot:session:*");
   const now = Date.now();
-  const ONLINE_THRESHOLD = 5 * 60 * 1000; // 5 минут
+  const ONLINE_THRESHOLD = 5 * 60 * 1000;
 
-  return Array.from(sessions.entries()).map(([key, session]) => {
-    const history = histories.get(key) ?? [];
+  const entries: GuestEntry[] = [];
+
+  for (const key of keys) {
+    const guestKey = key.replace("bot:session:", "");
+    const [rawSession, rawHistory] = await Promise.all([
+      r.get(key),
+      r.get(hk(guestKey)),
+    ]);
+    if (!rawSession) continue;
+
+    let session: Session;
+    try { session = JSON.parse(rawSession); } catch { continue; }
+
+    let history: Message[] = [];
+    try { if (rawHistory) history = JSON.parse(rawHistory); } catch {}
+
     const lastUserMsg = [...history].reverse().find(m => m.role === "user");
     const lastTime = lastUserMsg?.time;
     const isOnline = lastTime
       ? now - new Date(lastTime).getTime() < ONLINE_THRESHOLD
       : false;
 
-    return {
-      key,
+    entries.push({
+      key: guestKey,
       session,
       msgCount:    history.length,
       lastMessage: lastUserMsg?.content?.slice(0, 80),
       lastTime,
       isOnline,
-    };
-  });
+    });
+  }
+
+  return entries;
 }
 
-export function getHistoryByKey(key: string): Message[] {
-  return histories.get(key) ?? [];
+export async function getHistoryByKey(key: string): Promise<Message[]> {
+  return getHistory(key);
 }
