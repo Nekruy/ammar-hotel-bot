@@ -466,17 +466,17 @@ async function main() {
   const PORT = parseInt(process.env.PORT || "3000");
   app.listen(PORT, () => logger.info(`🚀 Server started on :${PORT}`));
 
-  // Telegram — webhook на Railway, long polling локально
+  // Telegram — webhook если задан BOT_WEBHOOK_URL, иначе long polling (локально)
   if (process.env.TELEGRAM_BOT_TOKEN) {
     const bot = createTelegramBot();
-    const domain = process.env.RAILWAY_PUBLIC_DOMAIN;
+    // BOT_WEBHOOK_URL — явная переменная (полный URL до /telegram).
+    // Не используем RAILWAY_PUBLIC_DOMAIN: Railway перезаписывает его при каждом
+    // деплое, что приводит к непредсказуемой смене webhook-адреса.
+    const webhookUrl = process.env.BOT_WEBHOOK_URL;
 
-    if (domain) {
-      // ── Webhook mode (Railway) ─────────────────────────────────────
-      const webhookUrl = `https://${domain}/telegram`;
-      // Зарегистрировать маршрут до setWebhook, чтобы Telegram мог доставить апдейты
-      // Telegram allows up to 60 s for webhook response.
-      // Default grammy timeout is 10 s — too short for Groq + tool calls.
+    if (webhookUrl) {
+      // ── Webhook mode (Railway / production) ───────────────────────
+      // Telegram даёт до 60 с на ответ; 55 с хватит для Groq + tool calls.
       app.post("/telegram", webhookCallback(bot, "express", { timeoutMilliseconds: 55_000 }));
       try {
         await bot.init();
