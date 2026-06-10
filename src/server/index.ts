@@ -31,6 +31,10 @@ const ALLOWED_ORIGINS = [
 
 const app = express();
 
+// Railway (and most PaaS) run behind a reverse proxy — required for
+// correct IP detection in express-rate-limit and req.ip.
+app.set("trust proxy", 1);
+
 // Allow inline scripts/styles so the bundled chat widget works
 app.use(helmet({
   contentSecurityPolicy: {
@@ -471,7 +475,9 @@ async function main() {
       // ── Webhook mode (Railway) ─────────────────────────────────────
       const webhookUrl = `https://${domain}/telegram`;
       // Зарегистрировать маршрут до setWebhook, чтобы Telegram мог доставить апдейты
-      app.post("/telegram", webhookCallback(bot, "express"));
+      // Telegram allows up to 60 s for webhook response.
+      // Default grammy timeout is 10 s — too short for Groq + tool calls.
+      app.post("/telegram", webhookCallback(bot, "express", { timeoutMilliseconds: 55_000 }));
       try {
         await bot.init();
         await bot.api.setWebhook(webhookUrl, { drop_pending_updates: true });
