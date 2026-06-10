@@ -461,11 +461,24 @@ async function main() {
   const PORT = parseInt(process.env.PORT || "3000");
   app.listen(PORT, () => logger.info(`🚀 Server started on :${PORT}`));
 
-  // Telegram
+  // Telegram — самовосстанавливающийся polling loop
   if (process.env.TELEGRAM_BOT_TOKEN) {
     const bot = createTelegramBot();
-    bot.start({ onStart: (info) => { logger.info(`✅ Telegram: @${info.username}`); } })
-      .catch((err) => logger.error("Telegram bot crashed", { err: err.message }));
+
+    (async function pollLoop() {
+      while (true) {
+        try {
+          await bot.start({ onStart: (info) => { logger.info(`✅ Telegram: @${info.username}`); } });
+          // bot.stop() вызван — выходим из цикла штатно
+          break;
+        } catch (err: any) {
+          // 409 Conflict (two instances) — ждём 10с и пробуем снова
+          const wait = err.message?.includes("409") ? 10_000 : 5_000;
+          logger.error(`Telegram polling crashed — retry in ${wait / 1000}s`, { err: err.message });
+          await new Promise(r => setTimeout(r, wait));
+        }
+      }
+    })();
   } else {
     logger.warn("⚠️  TELEGRAM_BOT_TOKEN not set");
   }
