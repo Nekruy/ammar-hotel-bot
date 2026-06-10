@@ -11,6 +11,7 @@ import { logger }        from "../utils/logger";
 import { Message }       from "../utils/redis";
 import { broadcastEvent } from "../utils/adminEvents";
 import { incMessages }   from "../utils/stats";
+import { pmsClient }     from "../integrations/pmsClient";
 
 // ── Scenarios dataset (читаем с диска при каждом вызове — мгновенный эффект после правок) ──
 // process.cwd() = project root (надёжнее __dirname в динамически импортируемых модулях tsx)
@@ -270,7 +271,7 @@ export async function chat(
     return result;
   }
 
-  const systemFull = buildSystem(guest);
+  const systemFull = await buildSystem(guest);
 
   // Формируем историю для Grok
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
@@ -418,15 +419,41 @@ export async function chat(
 
 // ── HELPERS ──────────────────────────────────────────────────
 
-function buildSystem(guest: GuestCtx): string {
+async function buildSystem(guest: GuestCtx): Promise<string> {
   const now  = new Date().toLocaleString("ru-RU", { timeZone: "Asia/Dushanbe" });
   const hour = new Date().toLocaleString("ru-RU", {
     timeZone: "Asia/Dushanbe", hour: "2-digit", hour12: false
   });
   const quiet = parseInt(hour) >= 22 || parseInt(hour) < 8;
 
-  return getSystemPrompt() + `
+  // Live hotel services & policy from PMS (cached 60s, fails gracefully)
+  const k = await pmsClient.getKnowledge().catch(() => null);
+  let knowledgeSection = "";
+  if (k) {
+    const y = "✅", n = "❌";
+    knowledgeSection = `
+═══════════════════════════════════════════════
+УСЛУГИ ОТЕЛЯ (актуально из PMS)
+═══════════════════════════════════════════════
+Ресторан:      ${k.restaurantOpen ? `${y} открыт (${k.restaurantHours.ru})` : `${n} закрыт`}
+Завтрак:       ${k.breakfastIncluded ? `${y} включён (${k.breakfastHours.ru}) — ${k.breakfastType.ru}` : `${n} не включён`}
+Room service:  ${k.roomServiceAvailable ? `${y} (${k.roomServiceHours.ru})` : n}
+Трансфер:      ${k.transferAvailable ? `${y}${k.transferInfo.ru ? ` — ${k.transferInfo.ru}` : ""}` : n}
+Парковка:      ${k.parkingAvailable ? y : n}
+Прачечная:     ${k.laundryAvailable ? y : n}
+Спа:           ${k.spaAvailable ? `${y}${k.spaInfo.ru ? ` — ${k.spaInfo.ru}` : ""}` : n}
+Конференц-зал: ${k.conferenceAvailable ? y : n}
+Wi-Fi:         ${k.wifiAvailable ? `${y} — ${k.wifiInfo.ru}` : n}
+Обмен валют:   ${k.currencyExchange ? y : n}
+Заезд/выезд:   ${k.checkInTime} / ${k.checkOutTime}
+Питомцы:       ${k.petsAllowed ? y : n}
+Оплата:        ${k.paymentInfo.ru}
+Отмена брони:  ${k.cancellationPolicy.ru || "уточняйте на ресепшн"}
+Дети:          ${k.childrenPolicy.ru || "уточняйте на ресепшн"}
+`;
+  }
 
+  return getSystemPrompt() + knowledgeSection + `
 ═══════════════════════════════════════════════
 ГОСТЬ СЕЙЧАС
 ═══════════════════════════════════════════════

@@ -1,11 +1,22 @@
-// src/integrations/pmsClient.ts — Ammar PMS public API wrapper
+// src/integrations/pmsClient.ts — Ammar PMS API wrapper (public + bot endpoints)
 
 import axios, { AxiosError } from "axios";
 import { logger } from "../utils/logger";
 
 const BASE = (process.env.PMS_API_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
+// Public endpoints — no auth
 const http = axios.create({ baseURL: BASE, timeout: 8000 });
+
+// Bot endpoints — x-bot-api-key
+const BOT_KEY = process.env.BOT_API_KEY ?? "";
+const botHttp  = axios.create({
+  baseURL: BASE,
+  timeout: 8000,
+  headers: BOT_KEY ? { "x-bot-api-key": BOT_KEY } : {},
+});
+
+// ── Interfaces ────────────────────────────────────────────────────────────────
 
 export interface BookingInfo {
   code:       string;
@@ -21,6 +32,86 @@ export interface BookingInfo {
   createdAt:  string;
 }
 
+export interface ReservationInfo {
+  id:         string;
+  folioId:    string;
+  guestName:  string;
+  checkIn:    string;
+  checkOut:   string;
+  roomType:   string;
+  roomNumber: string;
+  status:     string;
+}
+
+export interface FolioItem {
+  id:           string;
+  type:         string;
+  description:  string;
+  amount:       number;
+  businessDate: string;
+}
+
+export interface FolioData {
+  id:            string;
+  reservationId: string;
+  items:         FolioItem[];
+  totalCharges:  number;
+  totalPaid:     number;
+  balance:       number;
+}
+
+export interface AddFolioItemInput {
+  type:         "ROOM_CHARGE" | "MINIBAR" | "BREAKFAST" | "SERVICE" | "PENALTY" | "CORRECTION";
+  description:  string;
+  amount:       number;
+  businessDate: string;
+}
+
+export interface I18nText {
+  ru: string; en: string; tg: string; zh: string;
+}
+
+export interface KnowledgeMenuItem {
+  id:        string;
+  category:  string;
+  nameRu:    string;
+  nameEn:    string;
+  nameTg:    string;
+  nameZh:    string;
+  descRu:    string;
+  price:     number;
+  available: boolean;
+  sortOrder: number;
+}
+
+export interface KnowledgeData {
+  restaurantOpen:       boolean;
+  restaurantHours:      I18nText;
+  breakfastIncluded:    boolean;
+  breakfastHours:       I18nText;
+  breakfastType:        I18nText;
+  transferAvailable:    boolean;
+  transferInfo:         I18nText;
+  parkingAvailable:     boolean;
+  parkingInfo:          I18nText;
+  roomServiceAvailable: boolean;
+  roomServiceHours:     I18nText;
+  laundryAvailable:     boolean;
+  spaAvailable:         boolean;
+  spaInfo:              I18nText;
+  conferenceAvailable:  boolean;
+  wifiAvailable:        boolean;
+  wifiInfo:             I18nText;
+  currencyExchange:     boolean;
+  checkInTime:          string;
+  checkOutTime:         string;
+  childrenPolicy:       I18nText;
+  petsAllowed:          boolean;
+  paymentInfo:          I18nText;
+  cancellationPolicy:   I18nText;
+  menu:                 KnowledgeMenuItem[];
+}
+
 export interface AvailabilityResult {
   roomTypeId:  string;
   name:        string;
@@ -29,12 +120,12 @@ export interface AvailabilityResult {
   available:   number;
   nights:      number;
   ratePlans: {
-    id:               string;
-    name:             string;
+    id:                string;
+    name:              string;
     includesBreakfast: boolean;
-    refundable:       boolean;
-    pricePerNight:    number;
-    totalPrice:       number;
+    refundable:        boolean;
+    pricePerNight:     number;
+    totalPrice:        number;
   }[];
 }
 
@@ -50,6 +141,8 @@ export interface CreateBookingInput {
   language?:  string;
 }
 
+// ── Error helper ──────────────────────────────────────────────────────────────
+
 function apiErr(e: unknown): string {
   if (e instanceof AxiosError) {
     const msg = e.response?.data?.message ?? e.message;
@@ -58,7 +151,16 @@ function apiErr(e: unknown): string {
   return String(e);
 }
 
+// ── 60-second knowledge cache ─────────────────────────────────────────────────
+
+let _knowledgeCache: { data: KnowledgeData; ts: number } | null = null;
+const KNOWLEDGE_TTL = 60_000;
+
+// ── PMS client ─────────────────────────────────────────────────────────────────
+
 export const pmsClient = {
+
+  // ── Public endpoints (no auth) ─────────────────────────────────────────────
 
   async getBookingByCode(code: string): Promise<BookingInfo | null> {
     try {
@@ -99,7 +201,75 @@ export const pmsClient = {
       const { data } = await http.post<{ code: string; status: string }>("/api/public/bookings", input);
       return data;
     } catch (e) {
-      logger.warn("pmsClient.createBooking failed", { input, err: apiErr(e) });
+      logger.warn("pmsClient.createBooking failed", { err: apiErr(e) });
+      return null;
+    }
+  },
+
+  // ── Bot endpoints (x-bot-api-key) ──────────────────────────────────────────
+
+  async getActiveReservationByRoom(roomNumber: string): Promise<ReservationInfo | null> {
+    try {
+      const { data } = await botHttp.get<ReservationInfo>(
+        `/api/bot/reservations/active/${encodeURIComponent(roomNumber)}`
+      );
+      return data;
+    } catch (e) {
+      if (e instanceof AxiosError && e.response?.status === 404) return null;
+      logger.warn("pmsClient.getActiveReservationByRoom failed", { roomNumber, err: apiErr(e) });
+      return null;
+    }
+  },
+
+  async getReservationFolio(reservationId: string): Promise<FolioData | null> {
+    try {
+      const { data } = await botHttp.get<FolioData>(
+        `/api/bot/folios/${encodeURIComponent(reservationId)}`
+      );
+      return data;
+    } catch (e) {
+      if (e instanceof AxiosError && e.response?.status === 404) return null;
+      logger.warn("pmsClient.getReservationFolio failed", { reservationId, err: apiErr(e) });
+      return null;
+    }
+  },
+
+  async addFolioItem(reservationId: string, item: AddFolioItemInput): Promise<boolean> {
+    try {
+      await botHttp.post(
+        `/api/bot/reservations/${encodeURIComponent(reservationId)}/folio-items`,
+        item
+      );
+      return true;
+    } catch (e) {
+      logger.warn("pmsClient.addFolioItem failed", { reservationId, err: apiErr(e) });
+      return false;
+    }
+  },
+
+  async extendStay(reservationId: string, newCheckOut: string): Promise<boolean> {
+    try {
+      await botHttp.patch(
+        `/api/bot/reservations/${encodeURIComponent(reservationId)}/extend`,
+        { checkOut: newCheckOut }
+      );
+      return true;
+    } catch (e) {
+      logger.warn("pmsClient.extendStay failed", { reservationId, newCheckOut, err: apiErr(e) });
+      return false;
+    }
+  },
+
+  async getKnowledge(): Promise<KnowledgeData | null> {
+    if (_knowledgeCache && Date.now() - _knowledgeCache.ts < KNOWLEDGE_TTL) {
+      return _knowledgeCache.data;
+    }
+    try {
+      const { data } = await botHttp.get<KnowledgeData>("/api/bot/knowledge");
+      _knowledgeCache = { data, ts: Date.now() };
+      return data;
+    } catch (e) {
+      logger.warn("pmsClient.getKnowledge failed", { err: apiErr(e) });
       return null;
     }
   },

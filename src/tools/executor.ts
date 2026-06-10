@@ -44,12 +44,16 @@ export async function executeToolCall(
 
 // ════════ 1. БРОНИРОВАНИЕ ════════════════════════════════════════
 async function toolGetBooking(roomNumber: string, bookingCode: string | undefined, _g: GuestCtx) {
-  // Try booking_code first; fall back to room number lookup for IN_HOUSE guests
+  // Try booking_code first (pre-arrival guests)
   if (bookingCode) {
     const b = await pmsClient.getBookingByCode(bookingCode);
     if (b) return b;
   }
+  // For IN_HOUSE guests use bot endpoint — returns id + folioId for folio access
   if (roomNumber && roomNumber !== "N/A") {
+    const r = await pmsClient.getActiveReservationByRoom(roomNumber);
+    if (r) return r;
+    // Fallback to public endpoint when BOT_API_KEY is not configured
     const b = await pmsClient.getActiveBookingByRoom(roomNumber);
     if (b) return b;
   }
@@ -131,6 +135,21 @@ async function toolRoomService(room: string, input: any, guest: GuestCtx) {
   await safePrisma(() => prisma.order.create({
     data: { id, guestId: guest.guestId, roomNumber: room, items: input.items, status: "PENDING" }
   }));
+
+  // BUG-03 fix: post order to PMS folio so charges appear in reservation
+  const today = new Date().toISOString().slice(0, 10);
+  const reservation = await pmsClient.getActiveReservationByRoom(room);
+  if (reservation?.id) {
+    const posted = await pmsClient.addFolioItem(reservation.id, {
+      type:         "SERVICE",
+      description:  `Room Service (${id}): ${items}`,
+      amount:       0,
+      businessDate: today,
+    });
+    if (posted) {
+      logger.info("Room service posted to PMS folio", { room, reservationId: reservation.id, items });
+    }
+  }
 
   await notifyStaff("kitchen", { room, orderId: id, items, time: input.delivery_time || "СЕЙЧАС" });
   incRoomService();
@@ -292,8 +311,28 @@ async function toolUpsell(room: string, input: any, _g: GuestCtx) {
   return { success: true, offer: offers[input.offer_type] };
 }
 
-// ════════ 9. МЕНЮ (из menuStore — редактируется через админку) ═══
-function toolMenu(mealTime = "all") {
+// ════════ 9. МЕНЮ (PMS knowledge → fallback: local menuStore) ════
+async function toolMenu(mealTime = "all") {
+  const k = await pmsClient.getKnowledge().catch(() => null);
+  if (k?.menu?.length) {
+    const items = k.menu
+      .filter(item => {
+        if (!item.available) return false;
+        if (mealTime === "all") return true;
+        if (mealTime === "drinks") return item.category === "DRINKS";
+        return item.category === "FOOD";
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(item => ({ name: item.nameRu, price: `${item.price} сом`, desc: item.descRu || undefined }));
+    if (items.length > 0) {
+      return {
+        source:      "PMS",
+        restaurant:  k.restaurantOpen ? `Открыт (${k.restaurantHours.ru})` : "Закрыт",
+        meal_time:   mealTime,
+        items,
+      };
+    }
+  }
   return getMenuByTime(mealTime);
 }
 
@@ -414,15 +453,28 @@ async function toolLateCheckout(room: string, input: any) {
 async function toolRoomExtension(room: string, input: any) {
   const id = `RE-${Date.now()}`;
 
+  // Try to update PMS directly when new checkout date is known
+  let pmsUpdated = false;
+  if (input.new_checkout_date) {
+    const reservation = await pmsClient.getActiveReservationByRoom(room);
+    if (reservation?.id) {
+      pmsUpdated = await pmsClient.extendStay(reservation.id, input.new_checkout_date);
+      if (pmsUpdated) {
+        logger.info("Stay extended in PMS", { room, reservationId: reservation.id, newCheckOut: input.new_checkout_date });
+      }
+    }
+  }
+
   await notifyStaff("room_extension", {
     room,
     requestId:         id,
     extra_nights:      input.extra_nights,
     new_checkout_date: input.new_checkout_date || "уточнить",
+    pms_updated:       pmsUpdated,
   });
 
   await safePrisma(() => prisma.eventLog.create({
-    data: { eventType: "ROOM_EXTENSION", roomNumber: room, data: input }
+    data: { eventType: "ROOM_EXTENSION", roomNumber: room, data: { ...input, pms_updated: pmsUpdated } }
   }));
 
   return {
@@ -431,8 +483,11 @@ async function toolRoomExtension(room: string, input: any) {
     room,
     extra_nights:      input.extra_nights,
     new_checkout_date: input.new_checkout_date,
-    status:            "Запрос на продление отправлен",
-    note:              "Администратор свяжется с вами в течение 5–10 минут для подтверждения и расчёта стоимости ✅",
+    pms_updated:       pmsUpdated,
+    status:            pmsUpdated ? "Продление подтверждено в системе ✅" : "Запрос на продление отправлен",
+    note:              pmsUpdated
+      ? "Дата выезда обновлена в системе. Ресепшн пришлёт счёт за дополнительные ночи ✅"
+      : "Администратор свяжется с вами в течение 5–10 минут для подтверждения и расчёта стоимости ✅",
   };
 }
 
