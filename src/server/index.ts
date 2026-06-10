@@ -476,7 +476,7 @@ async function main() {
     app.post("/telegram", webhookCallback(bot, "express", { timeoutMilliseconds: 55_000 }));
 
     if (webhookUrl) {
-      // ── Webhook mode (Railway / production) ───────────────────────
+      // ── Webhook mode (production) ──────────────────────────────────
       // Telegram даёт до 60 с на ответ; 55 с хватит для Groq + tool calls.
       try {
         await bot.init();
@@ -486,24 +486,28 @@ async function main() {
       } catch (err: any) {
         logger.error("Telegram webhook setup failed", { err: err.message });
       }
-    } else if (process.env.NODE_ENV === "production") {
-      // Production без BOT_WEBHOOK_URL — НЕ запускать polling (bot.start вызывает
-      // deleteWebhook и сотрёт уже выставленный webhook).
-      logger.warn("⚠️  BOT_WEBHOOK_URL not set in production — Telegram updates via existing webhook only");
     } else {
-      // ── Long polling (локальная разработка) ────────────────────────
-      (async function pollLoop() {
-        while (true) {
-          try {
-            await bot.start({ onStart: (info) => { logger.info(`✅ Telegram polling: @${info.username}`); } });
-            break;
-          } catch (err: any) {
-            const wait = err.message?.includes("409") ? 10_000 : 5_000;
-            logger.error(`Telegram polling crashed — retry in ${wait / 1000}s`, { err: err.message });
-            await new Promise(r => setTimeout(r, wait));
+      // Нет BOT_WEBHOOK_URL — НЕ вызывать bot.start().
+      // bot.start() внутри вызывает deleteWebhook() и сотрёт любой ранее
+      // выставленный webhook. Polling допустим ТОЛЬКО при локальной разработке
+      // через npm run dev (где BOT_WEBHOOK_URL не задан намеренно).
+      if (process.env.npm_lifecycle_event === "dev") {
+        // ── Long polling (локальная разработка — только npm run dev) ──
+        (async function pollLoop() {
+          while (true) {
+            try {
+              await bot.start({ onStart: (info) => { logger.info(`✅ Telegram polling: @${info.username}`); } });
+              break;
+            } catch (err: any) {
+              const wait = err.message?.includes("409") ? 10_000 : 5_000;
+              logger.error(`Telegram polling crashed — retry in ${wait / 1000}s`, { err: err.message });
+              await new Promise(r => setTimeout(r, wait));
+            }
           }
-        }
-      })();
+        })();
+      } else {
+        logger.warn("⚠️  BOT_WEBHOOK_URL not set — Telegram polling disabled to protect existing webhook");
+      }
     }
   } else {
     logger.warn("⚠️  TELEGRAM_BOT_TOKEN not set");
