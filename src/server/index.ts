@@ -466,18 +466,18 @@ async function main() {
   const PORT = parseInt(process.env.PORT || "3000");
   app.listen(PORT, () => logger.info(`🚀 Server started on :${PORT}`));
 
-  // Telegram — webhook если задан BOT_WEBHOOK_URL, иначе long polling (локально)
+  // Telegram — webhook (production) или long polling (локальная разработка)
   if (process.env.TELEGRAM_BOT_TOKEN) {
     const bot = createTelegramBot();
-    // BOT_WEBHOOK_URL — явная переменная (полный URL до /telegram).
-    // Не используем RAILWAY_PUBLIC_DOMAIN: Railway перезаписывает его при каждом
-    // деплое, что приводит к непредсказуемой смене webhook-адреса.
     const webhookUrl = process.env.BOT_WEBHOOK_URL;
+
+    // /telegram регистрируется всегда — webhook может быть уже выставлен вручную
+    // через curl/Railway CLI, а маршрут должен быть готов к приёму до setWebhook.
+    app.post("/telegram", webhookCallback(bot, "express", { timeoutMilliseconds: 55_000 }));
 
     if (webhookUrl) {
       // ── Webhook mode (Railway / production) ───────────────────────
       // Telegram даёт до 60 с на ответ; 55 с хватит для Groq + tool calls.
-      app.post("/telegram", webhookCallback(bot, "express", { timeoutMilliseconds: 55_000 }));
       try {
         await bot.init();
         await bot.api.setWebhook(webhookUrl, { drop_pending_updates: true });
@@ -486,6 +486,10 @@ async function main() {
       } catch (err: any) {
         logger.error("Telegram webhook setup failed", { err: err.message });
       }
+    } else if (process.env.NODE_ENV === "production") {
+      // Production без BOT_WEBHOOK_URL — НЕ запускать polling (bot.start вызывает
+      // deleteWebhook и сотрёт уже выставленный webhook).
+      logger.warn("⚠️  BOT_WEBHOOK_URL not set in production — Telegram updates via existing webhook only");
     } else {
       // ── Long polling (локальная разработка) ────────────────────────
       (async function pollLoop() {
