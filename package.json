@@ -9,7 +9,7 @@
   "scripts": {
     "dev":        "tsx watch src/server/index.ts",
     "build":      "npx tsc",
-    "start":      "npx tsx src/server/index.ts",
+    "start":      "node dist/server/index.js",
     "start:prod": "node dist/server/index.js"
   },
   "dependencies": {

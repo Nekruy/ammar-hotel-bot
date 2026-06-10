@@ -1,4 +1,8 @@
 // src/server/index.ts — Главная точка входа
+// Diagnostic: surface silent crashes into Railway logs
+process.on("uncaughtException",  (e) => { console.error("FATAL uncaughtException",  e); });
+process.on("unhandledRejection", (e) => { console.error("FATAL unhandledRejection", e); });
+
 import "dotenv/config";
 import fs   from "fs";
 import path from "path";
