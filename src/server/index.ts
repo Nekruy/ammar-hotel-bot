@@ -6,6 +6,7 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { webhookCallback } from "grammy";
 import { createTelegramBot, getTelegramBot } from "../bot/telegramHandler";
 import { notifyStaff }                       from "../integrations/staffNotifier";
 import { logger }                            from "../utils/logger";
@@ -461,24 +462,39 @@ async function main() {
   const PORT = parseInt(process.env.PORT || "3000");
   app.listen(PORT, () => logger.info(`🚀 Server started on :${PORT}`));
 
-  // Telegram — самовосстанавливающийся polling loop
+  // Telegram — webhook на Railway, long polling локально
   if (process.env.TELEGRAM_BOT_TOKEN) {
     const bot = createTelegramBot();
+    const domain = process.env.RAILWAY_PUBLIC_DOMAIN;
 
-    (async function pollLoop() {
-      while (true) {
-        try {
-          await bot.start({ onStart: (info) => { logger.info(`✅ Telegram: @${info.username}`); } });
-          // bot.stop() вызван — выходим из цикла штатно
-          break;
-        } catch (err: any) {
-          // 409 Conflict (two instances) — ждём 10с и пробуем снова
-          const wait = err.message?.includes("409") ? 10_000 : 5_000;
-          logger.error(`Telegram polling crashed — retry in ${wait / 1000}s`, { err: err.message });
-          await new Promise(r => setTimeout(r, wait));
-        }
+    if (domain) {
+      // ── Webhook mode (Railway) ─────────────────────────────────────
+      const webhookUrl = `https://${domain}/telegram`;
+      // Зарегистрировать маршрут до setWebhook, чтобы Telegram мог доставить апдейты
+      app.post("/telegram", webhookCallback(bot, "express"));
+      try {
+        await bot.init();
+        await bot.api.setWebhook(webhookUrl, { drop_pending_updates: true });
+        const me = await bot.api.getMe();
+        logger.info(`✅ Telegram webhook: @${me.username} → ${webhookUrl}`);
+      } catch (err: any) {
+        logger.error("Telegram webhook setup failed", { err: err.message });
       }
-    })();
+    } else {
+      // ── Long polling (локальная разработка) ────────────────────────
+      (async function pollLoop() {
+        while (true) {
+          try {
+            await bot.start({ onStart: (info) => { logger.info(`✅ Telegram polling: @${info.username}`); } });
+            break;
+          } catch (err: any) {
+            const wait = err.message?.includes("409") ? 10_000 : 5_000;
+            logger.error(`Telegram polling crashed — retry in ${wait / 1000}s`, { err: err.message });
+            await new Promise(r => setTimeout(r, wait));
+          }
+        }
+      })();
+    }
   } else {
     logger.warn("⚠️  TELEGRAM_BOT_TOKEN not set");
   }
