@@ -34,6 +34,8 @@ export async function executeToolCall(
       case "request_late_checkout":  return await toolLateCheckout(room, input);
       case "request_room_extension": return await toolRoomExtension(room, input);
       case "escalate_to_human":      return await toolEscalateToHuman(room, input, guest);
+      case "list_services":          return await toolListServices(input, guest);
+      case "order_service":          return await toolOrderService(room, input, guest);
       default: return { error: `Unknown tool: ${name}` };
     }
   } catch (e: any) {
@@ -514,6 +516,86 @@ async function toolEscalateToHuman(room: string, input: any, guest: GuestCtx) {
     request_id: id,
     status:     "Администратор уведомлён",
     eta:        input.priority === "urgent" ? "2–3 минуты" : "5–10 минут",
+  };
+}
+
+// ════════ 16. КАТАЛОГ УСЛУГ (только для заселённых) ══════════════
+async function toolListServices(input: any, guest: GuestCtx) {
+  const room = input.room_number || guest.roomNumber;
+  if (!room) {
+    return {
+      available: false,
+      message:   "Каталог услуг и мини-бара доступен только для заселённых гостей. Пожалуйста, укажите ваш номер комнаты или отсканируйте QR-код у входа в номер.",
+    };
+  }
+
+  const items = await pmsClient.getServices(input.category);
+  if (!items.length) {
+    return {
+      available: false,
+      message:   "Услуги временно недоступны. Обратитесь на ресепшн: ☎️ 0",
+    };
+  }
+
+  const CATEGORY_LABEL: Record<string, string> = {
+    FOOD: "🍽 Еда из ресторана", TRANSPORT: "🚕 Транспорт",
+    MINIBAR: "🥤 Мини-бар", OTHER: "🛎 Прочие услуги",
+  };
+
+  return {
+    available: true,
+    category:  input.category || "all",
+    items:     items.map(s => ({
+      id:       s.id,
+      name:     s.name,
+      price:    s.price,
+      category: s.category,
+      label:    CATEGORY_LABEL[s.category] ?? s.category,
+    })),
+    note: "Цены за единицу. Скажите что добавить и в каком количестве — уточню итог и добавлю в счёт после вашего подтверждения.",
+  };
+}
+
+// ════════ 17. ПРОВЕСТИ УСЛУГУ В ФОЛИО ════════════════════════════
+async function toolOrderService(room: string, input: any, guest: GuestCtx) {
+  if (!guest.roomNumber && !room) {
+    return {
+      success: false,
+      message: "Для заказа услуг необходимо быть заселённым гостем. Укажите номер комнаты или отсканируйте QR-код в номере.",
+    };
+  }
+
+  const reservation = await pmsClient.getActiveReservationByRoom(room);
+  if (!reservation?.id) {
+    return {
+      success: false,
+      message: "Активное бронирование для этого номера не найдено. Обратитесь на ресепшн: ☎️ 0",
+    };
+  }
+
+  const qty   = Math.max(1, Math.round(Number(input.quantity) || 1));
+  const today = new Date().toISOString().slice(0, 10);
+
+  const result = await pmsClient.chargeService(reservation.id, input.service_id, qty, today);
+
+  if (!result.success) {
+    logger.warn("toolOrderService: chargeService failed", { room, serviceId: input.service_id, err: result.error });
+    const msg = result.error?.includes("закрыт")
+      ? result.error
+      : "Не удалось провести услугу в счёт. Обратитесь на ресепшн: ☎️ 0";
+    return { success: false, message: msg };
+  }
+
+  logger.info("Service charged to folio via bot", {
+    room, reservationId: reservation.id, serviceId: input.service_id, qty,
+  });
+
+  return {
+    success:     true,
+    description: result.item?.description ?? `${qty} ед.`,
+    amount:      result.item?.amount ?? 0,
+    folio_type:  result.item?.type,
+    message:     `✅ Добавлено в счёт: ${result.item?.description ?? ""} — ${result.item?.amount ?? ""} сом`,
   };
 }
 

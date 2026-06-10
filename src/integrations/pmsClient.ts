@@ -67,6 +67,13 @@ export interface AddFolioItemInput {
   businessDate: string;
 }
 
+export interface ServiceItem {
+  id:       string;
+  name:     string;
+  price:    number;
+  category: "FOOD" | "TRANSPORT" | "MINIBAR" | "OTHER";
+}
+
 export interface I18nText {
   ru: string; en: string; tg: string; zh: string;
 }
@@ -257,6 +264,36 @@ export const pmsClient = {
     } catch (e) {
       logger.warn("pmsClient.extendStay failed", { reservationId, newCheckOut, err: apiErr(e) });
       return false;
+    }
+  },
+
+  async getServices(category?: string): Promise<ServiceItem[]> {
+    try {
+      const params = category ? `?category=${encodeURIComponent(category)}` : "";
+      const { data } = await botHttp.get<ServiceItem[]>(`/api/bot/services${params}`);
+      return data;
+    } catch (e) {
+      logger.warn("pmsClient.getServices failed", { category, err: apiErr(e) });
+      return [];
+    }
+  },
+
+  async chargeService(
+    reservationId: string,
+    serviceId: string,
+    qty: number,
+    businessDate?: string,
+  ): Promise<{ success: boolean; item?: any; error?: string }> {
+    try {
+      const { data } = await botHttp.post(
+        `/api/bot/reservations/${encodeURIComponent(reservationId)}/charge-service`,
+        { serviceId, qty, ...(businessDate ? { businessDate } : {}) },
+      );
+      return { success: true, item: data };
+    } catch (e) {
+      const msg = apiErr(e);
+      logger.warn("pmsClient.chargeService failed", { reservationId, serviceId, err: msg });
+      return { success: false, error: msg };
     }
   },
 

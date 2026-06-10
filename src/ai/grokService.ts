@@ -287,6 +287,7 @@ export async function chat(
     "create_room_service",   "create_housekeeping",   "arrange_taxi",
     "request_wake_up",       "arrange_excursion",     "escalate_to_staff",
     "request_late_checkout", "request_room_extension","escalate_to_human",
+    "order_service",
   ]);
 
   // ── АГЕНТНЫЙ ЦИКЛ — wrapped so no exception ever escapes to the caller ──

@@ -156,4 +156,20 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       guest_message:    { type:"string", description:"Что именно написал гость — для контекста администратору" },
       priority:         { type:"string", enum:["normal","urgent"], description:"normal — стандартный запрос, urgent — гость расстроен или ждёт немедленного ответа" },
     }}}},
+
+  { type:"function", function:{ name:"list_services",
+    description:"Показать гостю каталог услуг отеля с ценами из PMS. Вызывай когда гость спрашивает что можно заказать в номер, что есть в мини-баре, какие услуги доступны, сколько стоит. ТОЛЬКО для заселённых гостей с номером комнаты. Если гость без номера — объясни, что сервис доступен только для постояльцев.",
+    parameters:{ type:"object", properties:{
+      room_number: { type:"string", description:"Номер комнаты гостя (обязателен для проверки заселения)" },
+      category:    { type:"string", enum:["FOOD","TRANSPORT","MINIBAR","OTHER"], description:"Фильтр по категории. MINIBAR — напитки и снеки из мини-бара; FOOD — блюда ресторана; TRANSPORT — такси/трансфер; OTHER — прачечная и прочее. Не указывай — получишь все позиции." },
+    }}}},
+
+  { type:"function", function:{ name:"order_service",
+    description:"Провести услугу или позицию мини-бара в счёт гостя (фолио брони). СТРОГО: вызывай ТОЛЬКО после того, как гость явно подтвердил конкретную позицию, количество И цену (напр. 'да', 'подтверждаю', 'добавь'). Алгоритм: 1) вызови list_services чтобы показать прайс, 2) назови гостю что именно и по какой цене добавишь, 3) получи 'да/подтверждаю' — только тогда вызывай order_service. Не вызывай без подтверждения. Цена берётся с сервера — не придумывай.",
+    parameters:{ type:"object", required:["room_number","service_id","quantity"],
+    properties:{
+      room_number: { type:"string", description:"Номер комнаты гостя" },
+      service_id:  { type:"string", description:"UUID услуги из list_services — скопируй точно" },
+      quantity:    { type:"number",  description:"Количество (целое, минимум 1)" },
+    }}}},
 ];
