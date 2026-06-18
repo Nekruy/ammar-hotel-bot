@@ -11,14 +11,20 @@ import { broadcastEvent } from "../utils/adminEvents";
 import { incMessages }   from "../utils/stats";
 import { pmsClient }     from "../integrations/pmsClient";
 
-// Groq использует OpenAI-совместимый API
-const grok = new OpenAI({
+// Gemini — основной провайдер (OpenAI-совместимый endpoint)
+const geminiClient = new OpenAI({
+  apiKey:  process.env.GEMINI_API_KEY!,
+  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+});
+
+// Groq — резервный провайдер
+const groqClient = new OpenAI({
   apiKey:  process.env.GROQ_API_KEY!,
   baseURL: "https://api.groq.com/openai/v1",
 });
 
-const MODEL_PRIMARY  = process.env.GROQ_MODEL_PRIMARY  || process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
-const MODEL_FALLBACK = process.env.GROQ_MODEL_FALLBACK || "llama-3.1-8b-instant";
+const MODEL_PRIMARY  = process.env.GEMINI_MODEL_PRIMARY || "gemini-2.0-flash";
+const MODEL_FALLBACK = process.env.GROQ_MODEL_FALLBACK  || "llama-3.1-8b-instant";
 
 // Жёсткий таймаут на весь chat() — переопределяется через env CHAT_TIMEOUT_MS
 const CHAT_TIMEOUT_MS = parseInt(process.env.CHAT_TIMEOUT_MS ?? "") || 14_000;
@@ -34,8 +40,10 @@ async function groqCreate(
 
   for (let mi = 0; mi < models.length; mi++) {
     const model = models[mi];
+    // Gemini-модели → geminiClient, всё остальное (Groq/llama) → groqClient
+    const client = model.startsWith("gemini") ? geminiClient : groqClient;
     try {
-      return await grok.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
+      return await client.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
     } catch (err: any) {
       // 413: trim context, retry той же моделью один раз, затем следующая модель
       if (err.status === 413) {
@@ -47,12 +55,12 @@ async function groqCreate(
         const lastUserIdx = [...nonSys].reverse().findIndex(m => m.role === "user");
         const relevant = lastUserIdx >= 0 ? nonSys.slice(nonSys.length - 1 - lastUserIdx) : nonSys.slice(-3);
         msgs = [compactSys, ...relevant];
-        logger.warn("Groq 413 — trimmed context", { model, kept: msgs.length });
+        logger.warn("AI 413 — trimmed context", { model, provider: model.startsWith("gemini") ? "gemini" : "groq", kept: msgs.length });
         try {
-          return await grok.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
+          return await client.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
         } catch (retryErr: any) {
           if (mi < models.length - 1) {
-            logger.warn(`Groq 413+retry failed — switching to ${models[mi + 1]}`);
+            logger.warn(`AI 413+retry failed — switching to ${models[mi + 1]}`);
             continue;
           }
           throw Object.assign(retryErr, { status: 429 });
@@ -62,13 +70,13 @@ async function groqCreate(
       if (err.status !== 429) throw err;
       // 429: немедленно на следующую модель, без ожидания
       if (mi < models.length - 1) {
-        logger.warn(`Groq 429 on ${model} → switching to ${models[mi + 1]} (no wait)`);
+        logger.warn(`AI 429 on ${model} → switching to ${models[mi + 1]} (no wait)`);
         continue;
       }
-      throw err; // Обе модели исчерпаны
+      throw err; // Оба провайдера исчерпаны
     }
   }
-  throw new Error("Groq: all retry attempts exhausted");
+  throw new Error("AI: all retry attempts exhausted");
 }
 
 export interface GuestCtx {
@@ -143,20 +151,15 @@ export async function chat(
 
         const choice = response.choices[0];
 
-        logger.debug("Groq response", {
+        logger.debug("AI response", {
           finish_reason: choice.finish_reason,
           room:          guest.roomNumber,
           iteration:     iterations,
         });
 
-        // Модель дала текстовый ответ — готово
-        if (choice.finish_reason === "stop" || !choice.message.tool_calls?.length) {
-          reply = choice.message.content || fallback(guest.language);
-          break;
-        }
-
-        // Модель вызывает инструменты
-        if (choice.finish_reason === "tool_calls" && choice.message.tool_calls?.length) {
+        // tool_calls в приоритете над finish_reason — Gemini иногда возвращает
+        // finish_reason="stop" вместе с tool_calls, поэтому проверяем наличие tool_calls первым.
+        if (choice.message.tool_calls?.length) {
           messages.push(choice.message as OpenAI.Chat.ChatCompletionMessageParam);
 
           let calledAction = false;
@@ -189,10 +192,11 @@ export async function chat(
           }
 
           continue;
+        } else {
+          // Нет tool_calls — текстовый ответ (stop / length / etc.)
+          reply = choice.message.content || fallback(guest.language);
+          break;
         }
-
-        reply = choice.message.content || fallback(guest.language);
-        break;
       }
 
       // Лимит итераций исчерпан — принудительный финал
