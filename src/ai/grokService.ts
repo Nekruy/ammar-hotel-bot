@@ -1,8 +1,6 @@
 // src/ai/grokService.ts
 // AI движок — Groq (groq.com), совместим с OpenAI SDK
 
-import fs   from "fs";
-import path from "path";
 import OpenAI from "openai";
 import { getSystemPrompt } from "../utils/promptStore";
 import { TOOLS }         from "../config/tools";
@@ -12,166 +10,6 @@ import { Message }       from "../utils/redis";
 import { broadcastEvent } from "../utils/adminEvents";
 import { incMessages }   from "../utils/stats";
 import { pmsClient }     from "../integrations/pmsClient";
-
-// ── Scenarios dataset (читаем с диска при каждом вызове — мгновенный эффект после правок) ──
-// process.cwd() = project root (надёжнее __dirname в динамически импортируемых модулях tsx)
-const SCENARIOS_PATH = path.join(process.cwd(), "src/data/scenarios.json");
-const LANG_KEY: Record<string, string> = {
-  russian: "ru", tajik: "tj", english: "en", chinese: "cn",
-};
-
-function findScenario(message: string, language: string): { id: string; response: string } | null {
-  try {
-    const raw = fs.readFileSync(SCENARIOS_PATH, "utf8");
-    const { scenarios = [] } = JSON.parse(raw);
-    const msg  = message.toLowerCase().trim();
-    const lang = LANG_KEY[language] || "ru";
-
-    // Проход 1: точное совпадение с границей слова (приоритет)
-    for (const sc of scenarios) {
-      const triggers: string[] = sc.triggers || [];
-      const exact = triggers.some(t => {
-        const tr = t.toLowerCase();
-        return msg === tr ||
-               msg.includes(" " + tr + " ") ||
-               msg.startsWith(tr + " ") ||
-               msg.endsWith(" " + tr);
-      });
-      if (exact) {
-        const response = sc.responses?.[lang];
-        if (response) {
-          console.log(`📋 Датасет найден (точно): ${sc.id}`);
-          return { id: sc.id as string, response };
-        }
-      }
-    }
-
-    // Проход 2: частичное вхождение
-    for (const sc of scenarios) {
-      const triggers: string[] = sc.triggers || [];
-      const partial = triggers.some(t => msg.includes(t.toLowerCase()));
-      if (partial) {
-        const response = sc.responses?.[lang];
-        if (response) {
-          console.log(`📋 Датасет найден (частично): ${sc.id}`);
-          return { id: sc.id as string, response };
-        }
-      }
-    }
-  } catch { /* файл не найден или повреждён */ }
-  return null;
-}
-
-async function handleScenario(
-  scenarioId:    string,
-  userMessage:   string,
-  quickResponse: string,
-  guest:         GuestCtx,
-  history:       Message[]
-): Promise<{ reply: string; updatedHistory: Message[] }> {
-
-  // Карта инструментов по ID сценария — явный вызов нужного инструмента
-  const toolMap: Record<string, () => Promise<void>> = {
-
-    "HK-001": async () => {
-      await executeToolCall("create_housekeeping", {
-        room_number: guest.roomNumber, task_type: "towels", priority: "normal",
-        description: "Гость запросил свежие полотенца",
-      }, guest);
-    },
-    "HK-002": async () => {
-      await executeToolCall("create_housekeeping", {
-        room_number: guest.roomNumber, task_type: "cleaning", priority: "normal",
-        description: "Гость запросил уборку номера",
-      }, guest);
-    },
-    "HK-003": async () => {
-      await executeToolCall("create_housekeeping", {
-        room_number: guest.roomNumber, task_type: "hairdryer", priority: "normal",
-      }, guest);
-    },
-    "HK-004": async () => {
-      await executeToolCall("create_housekeeping", {
-        room_number: guest.roomNumber, task_type: "slippers", priority: "normal",
-      }, guest);
-    },
-
-    "TX-001": async () => {
-      await executeToolCall("arrange_taxi", {
-        room_number:  guest.roomNumber,
-        destination:  "Аэропорт Душанбе",
-        pickup_time:  "уточнить у гостя",
-        taxi_type:    "airport_transfer",
-        passengers:   1,
-      }, guest);
-    },
-    "TX-002": async () => {
-      await executeToolCall("arrange_taxi", {
-        room_number:  guest.roomNumber,
-        destination:  "по городу",
-        pickup_time:  "сейчас",
-        taxi_type:    "standard",
-        passengers:   1,
-      }, guest);
-    },
-
-    "CO-001": async () => {
-      await executeToolCall("escalate_to_staff", {
-        room_number: guest.roomNumber,
-        reason:      "Запрос позднего выезда до 16:00",
-        priority:    "normal",
-        summary:     `Комната ${guest.roomNumber} просит поздний выезд`,
-      }, guest);
-    },
-    "CM-001": async () => {
-      await executeToolCall("escalate_to_staff", {
-        room_number: guest.roomNumber,
-        reason:      "Жалоба гостя на сервис",
-        priority:    "urgent",
-        summary:     `⚠️ Комната ${guest.roomNumber} недовольна сервисом`,
-      }, guest);
-    },
-    "CM-002": async () => {
-      await executeToolCall("escalate_to_staff", {
-        room_number: guest.roomNumber,
-        reason:      "Жалоба на шум от соседей",
-        priority:    "urgent",
-        summary:     `🔇 Комната ${guest.roomNumber} — шумные соседи`,
-      }, guest);
-    },
-
-    "EX-002": async () => {
-      await executeToolCall("escalate_to_staff", {
-        room_number: guest.roomNumber,
-        reason:      "Запрос экскурсии",
-        priority:    "normal",
-        summary:     `🏔 Комната ${guest.roomNumber} интересуется экскурсиями`,
-      }, guest);
-    },
-
-    // WK-001 (побудка) — инструмент не вызываем: нужно уточнить время у гостя
-  };
-
-  const toolFn = toolMap[scenarioId];
-  if (toolFn) {
-    try {
-      await toolFn();
-      console.log(`✅ Инструмент вызван для ${scenarioId}`);
-    } catch (err: any) {
-      console.error(`❌ Ошибка инструмента ${scenarioId}:`, err.message);
-      logger.error(`handleScenario tool error [${scenarioId}]`, { err: err.message, room: guest.roomNumber });
-    }
-  }
-
-  const now = new Date().toISOString();
-  const updatedHistory: Message[] = [
-    ...history,
-    { role: "user" as const,      content: userMessage,    time: now },
-    { role: "assistant" as const, content: quickResponse,  time: now },
-  ].slice(-40);
-
-  return { reply: quickResponse, updatedHistory };
-}
 
 // Groq использует OpenAI-совместимый API
 const grok = new OpenAI({
@@ -242,25 +80,6 @@ export async function chat(
   history:     Message[],
   guest:       GuestCtx
 ): Promise<{ reply: string; updatedHistory: Message[] }> {
-
-  // Проверяем датасет — если нашли готовый ответ, вызываем инструмент и не тратим токены Groq
-  const scenario = findScenario(userMessage, guest.language);
-  if (scenario) {
-    const result = await handleScenario(scenario.id, userMessage, scenario.response, guest, history);
-    incMessages();
-    broadcastEvent("message", {
-      sessionKey: guest.guestId,
-      room:       guest.roomNumber ?? "—",
-      platform:   guest.platform,
-      language:   guest.language,
-      guestName:  guest.guestName,
-      userMessage,
-      botReply:   result.reply,
-      time:       new Date().toISOString(),
-    });
-    logger.info(`✅ Датасет: ${scenario.id} (экономия токенов)`, { room: guest.roomNumber });
-    return result;
-  }
 
   const systemFull = await buildSystem(guest);
 
@@ -439,7 +258,7 @@ async function buildSystem(guest: GuestCtx): Promise<string> {
 Завтрак:       ${k.breakfastIncluded ? `${y} включён (${t(k.breakfastHours)}) — ${t(k.breakfastType)}` : `${n} не включён`}
 Room service:  ${k.roomServiceAvailable ? `${y} (${t(k.roomServiceHours)})` : n}
 Трансфер:      ${k.transferAvailable ? `${y}${t(k.transferInfo) ? ` — ${t(k.transferInfo)}` : ""}` : n}
-Парковка:      ${k.parkingAvailable ? y : n}
+Парковка:      ${k.parkingAvailable ? `${y}${t(k.parkingInfo) ? ` — ${t(k.parkingInfo)}` : ""}` : n}
 Прачечная:     ${k.laundryAvailable ? y : n}
 Спа:           ${k.spaAvailable ? `${y}${t(k.spaInfo) ? ` — ${t(k.spaInfo)}` : ""}` : n}
 Конференц-зал: ${k.conferenceAvailable ? y : n}
