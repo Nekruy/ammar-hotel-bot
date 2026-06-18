@@ -8,34 +8,20 @@
     "stars": 5
   },
   "schedule": {
-    "restaurant": "08:00–23:00",
-    "breakfast": "08:00–10:00 (включён в стоимость)",
-    "spa": "10:00–21:00",
-    "room_service": "07:00–23:00",
     "gym": "06:00–22:00",
     "reception": "24/7",
-    "checkin": "14:00",
-    "checkout": "12:00",
     "late_checkout": "до 16:00, по запросу",
     "night_service": "Напитки из минибара, чай, вода — круглосуточно"
   },
   "policies": {
     "smoking": "Курение запрещено во всех номерах и помещениях",
-    "pets": "Животные не разрешены",
-    "wifi": "Бесплатный WiFi — пароль на ресепшне и на карточке в номере",
-    "parking": "Бесплатная парковка — 2 места",
     "elevator": true,
     "visitors": "Гости в номерах разрешены",
-    "breakfast_included": true,
     "vegetarian_menu": true
   },
   "services": {
-    "spa": true,
     "gym": true,
-    "laundry": true,
-    "transfer": true,
     "luggage_storage": "Бесплатное хранение багажа",
-    "currency_exchange": "Обмен валюты на ресепшне",
     "baby_cot": "Детская кроватка — бесплатно",
     "connecting_rooms": true,
     "accessible_rooms": true

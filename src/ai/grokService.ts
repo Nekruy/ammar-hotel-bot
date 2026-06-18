@@ -123,15 +123,6 @@ async function handleScenario(
         summary:     `Комната ${guest.roomNumber} просит поздний выезд`,
       }, guest);
     },
-    "CO-002": async () => {
-      await executeToolCall("escalate_to_staff", {
-        room_number: guest.roomNumber,
-        reason:      "Запрос продления проживания",
-        priority:    "normal",
-        summary:     `Комната ${guest.roomNumber} хочет продлить проживание`,
-      }, guest);
-    },
-
     "CM-001": async () => {
       await executeToolCall("escalate_to_staff", {
         room_number: guest.roomNumber,
@@ -432,25 +423,33 @@ async function buildSystem(guest: GuestCtx): Promise<string> {
   let knowledgeSection = "";
   if (k) {
     const y = "✅", n = "❌";
+    // BotKnowledge uses tg (not tj) for Tajik, zh for Chinese
+    const pmsLangMap: Record<string, string> = { russian: "ru", tajik: "tg", english: "en", chinese: "zh" };
+    const pl = pmsLangMap[guest.language] || "ru";
+    const t = (obj: any): string => {
+      if (!obj) return "";
+      const v = (obj as Record<string, string>)[pl];
+      return (v && v !== "") ? v : ((obj as Record<string, string>).ru || "");
+    };
     knowledgeSection = `
 ═══════════════════════════════════════════════
 УСЛУГИ ОТЕЛЯ (актуально из PMS)
 ═══════════════════════════════════════════════
-Ресторан:      ${k.restaurantOpen ? `${y} открыт (${k.restaurantHours.ru})` : `${n} закрыт`}
-Завтрак:       ${k.breakfastIncluded ? `${y} включён (${k.breakfastHours.ru}) — ${k.breakfastType.ru}` : `${n} не включён`}
-Room service:  ${k.roomServiceAvailable ? `${y} (${k.roomServiceHours.ru})` : n}
-Трансфер:      ${k.transferAvailable ? `${y}${k.transferInfo.ru ? ` — ${k.transferInfo.ru}` : ""}` : n}
+Ресторан:      ${k.restaurantOpen ? `${y} открыт (${t(k.restaurantHours)})` : `${n} закрыт`}
+Завтрак:       ${k.breakfastIncluded ? `${y} включён (${t(k.breakfastHours)}) — ${t(k.breakfastType)}` : `${n} не включён`}
+Room service:  ${k.roomServiceAvailable ? `${y} (${t(k.roomServiceHours)})` : n}
+Трансфер:      ${k.transferAvailable ? `${y}${t(k.transferInfo) ? ` — ${t(k.transferInfo)}` : ""}` : n}
 Парковка:      ${k.parkingAvailable ? y : n}
 Прачечная:     ${k.laundryAvailable ? y : n}
-Спа:           ${k.spaAvailable ? `${y}${k.spaInfo.ru ? ` — ${k.spaInfo.ru}` : ""}` : n}
+Спа:           ${k.spaAvailable ? `${y}${t(k.spaInfo) ? ` — ${t(k.spaInfo)}` : ""}` : n}
 Конференц-зал: ${k.conferenceAvailable ? y : n}
-Wi-Fi:         ${k.wifiAvailable ? `${y} — ${k.wifiInfo.ru}` : n}
+Wi-Fi:         ${k.wifiAvailable ? `${y} — ${t(k.wifiInfo)}` : n}
 Обмен валют:   ${k.currencyExchange ? y : n}
 Заезд/выезд:   ${k.checkInTime} / ${k.checkOutTime}
 Питомцы:       ${k.petsAllowed ? y : n}
-Оплата:        ${k.paymentInfo.ru}
-Отмена брони:  ${k.cancellationPolicy.ru || "уточняйте на ресепшн"}
-Дети:          ${k.childrenPolicy.ru || "уточняйте на ресепшн"}
+Оплата:        ${t(k.paymentInfo)}
+Отмена брони:  ${t(k.cancellationPolicy) || "уточняйте на ресепшн"}
+Дети:          ${t(k.childrenPolicy) || "уточняйте на ресепшн"}
 `;
   }
 
