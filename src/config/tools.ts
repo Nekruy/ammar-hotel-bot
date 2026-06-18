@@ -10,29 +10,6 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
       booking_code: { type:"string", description:"Код бронирования формата AMR-XXXXXXXX" },
     }} }},
 
-  { type:"function", function:{ name:"check_availability",
-    description:"Проверить доступность номеров на конкретные даты. Вызывай когда гость хочет узнать, есть ли свободные номера, до создания бронирования.",
-    parameters:{ type:"object", required:["check_in","check_out"],
-    properties:{
-      check_in:  { type:"string", description:"Дата заезда YYYY-MM-DD" },
-      check_out: { type:"string", description:"Дата выезда YYYY-MM-DD" },
-      guests:    { type:"number", description:"Количество гостей (по умолчанию 1)" },
-    }}}},
-
-  { type:"function", function:{ name:"create_booking",
-    description:"Создать новое бронирование для гостя. Вызывай ТОЛЬКО после check_availability и когда гость подтвердил выбор номера и тарифа. Обязательно получи от гостя: имя, даты, тип номера и тарифный план.",
-    parameters:{ type:"object", required:["check_in","check_out","room_type_id","rate_plan_id","guest_name"],
-    properties:{
-      check_in:     { type:"string", description:"Дата заезда YYYY-MM-DD" },
-      check_out:    { type:"string", description:"Дата выезда YYYY-MM-DD" },
-      room_type_id: { type:"string", description:"ID типа номера из check_availability" },
-      rate_plan_id: { type:"string", description:"ID тарифного плана из check_availability" },
-      guest_name:   { type:"string", description:"Полное имя гостя" },
-      phone:        { type:"string", description:"Телефон гостя (необязательно)" },
-      email:        { type:"string", description:"Email гостя (необязательно)" },
-      adults:       { type:"number", description:"Количество взрослых" },
-    }}}},
-
   { type:"function", function:{ name:"create_room_service",
     description:"Заказ еды и напитков в номер (07:00–23:00). ВЫЗЫВАЙ СРАЗУ когда гость упоминает еду, чай, кофе, воду, напитки или голод — без лишних уточнений.",
     parameters:{ type:"object", required:["room_number","items"],
@@ -139,12 +116,12 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
     }}}},
 
   { type:"function", function:{ name:"request_room_extension",
-    description:"Запрос продления проживания на 1 или более суток. Уточни кол-во ночей если не сказано.",
+    description:"Отправить запрос на продление проживания ресепшну. Уточни кол-во ночей или желаемую дату выезда если не сказано. Бронирование НЕ меняется автоматически — ресепшн подтвердит и пришлёт счёт.",
     parameters:{ type:"object", required:["room_number","extra_nights"],
     properties:{
       room_number:       { type:"string" },
       extra_nights:      { type:"number", description:"Количество дополнительных ночей" },
-      new_checkout_date: { type:"string", description:"Новая дата выезда YYYY-MM-DD" },
+      new_checkout_date: { type:"string", description:"Желаемая дата выезда YYYY-MM-DD" },
     }}}},
 
   { type:"function", function:{ name:"escalate_to_human",

@@ -119,35 +119,6 @@ export interface KnowledgeData {
   menu:                 KnowledgeMenuItem[];
 }
 
-export interface AvailabilityResult {
-  roomTypeId:  string;
-  name:        string;
-  description: string;
-  capacity:    number;
-  available:   number;
-  nights:      number;
-  ratePlans: {
-    id:                string;
-    name:              string;
-    includesBreakfast: boolean;
-    refundable:        boolean;
-    pricePerNight:     number;
-    totalPrice:        number;
-  }[];
-}
-
-export interface CreateBookingInput {
-  checkIn:    string;
-  checkOut:   string;
-  roomTypeId: string;
-  ratePlanId: string;
-  fullName:   string;
-  phone?:     string;
-  email?:     string;
-  adults?:    number;
-  language?:  string;
-}
-
 // ── Error helper ──────────────────────────────────────────────────────────────
 
 function apiErr(e: unknown): string {
@@ -191,28 +162,6 @@ export const pmsClient = {
     }
   },
 
-  async getAvailability(checkIn: string, checkOut: string, guests: number): Promise<AvailabilityResult[]> {
-    try {
-      const { data } = await http.get<AvailabilityResult[]>("/api/public/availability", {
-        params: { checkIn, checkOut, guests, locale: "ru" },
-      });
-      return data;
-    } catch (e) {
-      logger.warn("pmsClient.getAvailability failed", { checkIn, checkOut, guests, err: apiErr(e) });
-      return [];
-    }
-  },
-
-  async createBooking(input: CreateBookingInput): Promise<{ code: string; status: string } | null> {
-    try {
-      const { data } = await http.post<{ code: string; status: string }>("/api/public/bookings", input);
-      return data;
-    } catch (e) {
-      logger.warn("pmsClient.createBooking failed", { err: apiErr(e) });
-      return null;
-    }
-  },
-
   // ── Bot endpoints (x-bot-api-key) ──────────────────────────────────────────
 
   async getActiveReservationByRoom(roomNumber: string): Promise<ReservationInfo | null> {
@@ -250,19 +199,6 @@ export const pmsClient = {
       return true;
     } catch (e) {
       logger.warn("pmsClient.addFolioItem failed", { reservationId, err: apiErr(e) });
-      return false;
-    }
-  },
-
-  async extendStay(reservationId: string, newCheckOut: string): Promise<boolean> {
-    try {
-      await botHttp.patch(
-        `/api/bot/reservations/${encodeURIComponent(reservationId)}/extend`,
-        { checkOut: newCheckOut }
-      );
-      return true;
-    } catch (e) {
-      logger.warn("pmsClient.extendStay failed", { reservationId, newCheckOut, err: apiErr(e) });
       return false;
     }
   },

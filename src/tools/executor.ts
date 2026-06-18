@@ -18,8 +18,6 @@ export async function executeToolCall(
   try {
     switch (name) {
       case "get_booking":            return await toolGetBooking(room, input.booking_code, guest);
-      case "check_availability":     return await toolCheckAvailability(input);
-      case "create_booking":         return await toolCreateBooking(input, guest);
       case "create_room_service":    return await toolRoomService(room, input, guest);
       case "create_housekeeping":    return await toolHousekeeping(room, input, guest);
       case "arrange_taxi":           return await toolTaxi(room, input);
@@ -60,71 +58,6 @@ async function toolGetBooking(roomNumber: string, bookingCode: string | undefine
     if (b) return b;
   }
   return { found: false, note: "Бронирование не найдено. Попросите гостя уточнить код брони (формат AMR-XXXXXXXX) или номер комнаты." };
-}
-
-// ════════ 1b. ПРОВЕРКА ДОСТУПНОСТИ ═══════════════════════════════
-async function toolCheckAvailability(input: any) {
-  const { check_in, check_out, guests = 1 } = input;
-  if (!check_in || !check_out) {
-    return { error: "Укажите даты заезда и выезда" };
-  }
-  const results = await pmsClient.getAvailability(check_in, check_out, Number(guests));
-  if (results.length === 0) {
-    return { available: false, message: "На выбранные даты свободных номеров нет." };
-  }
-  return {
-    available: true,
-    nights:    results[0].nights,
-    options:   results.map(r => ({
-      roomTypeId:  r.roomTypeId,
-      name:        r.name,
-      capacity:    r.capacity,
-      available:   r.available,
-      from_price:  r.ratePlans[0]?.pricePerNight,
-      best_rate:   r.ratePlans[0],
-    })),
-  };
-}
-
-// ════════ 1c. СОЗДАНИЕ БРОНИРОВАНИЯ ══════════════════════════════
-async function toolCreateBooking(input: any, guest: GuestCtx) {
-  const { check_in, check_out, room_type_id, rate_plan_id, guest_name, phone, email, adults } = input;
-
-  if (!check_in || !check_out || !room_type_id || !rate_plan_id || !guest_name) {
-    return { error: "Не хватает данных: check_in, check_out, room_type_id, rate_plan_id, guest_name — все обязательны" };
-  }
-
-  const result = await pmsClient.createBooking({
-    checkIn:    check_in,
-    checkOut:   check_out,
-    roomTypeId: room_type_id,
-    ratePlanId: rate_plan_id,
-    fullName:   guest_name,
-    phone:      phone ?? guest.roomNumber,
-    email,
-    adults:     adults ?? 1,
-    language:   "ru",
-  });
-
-  if (!result) {
-    return { success: false, message: "Не удалось создать бронирование. Попробуйте ещё раз или обратитесь на ресепшн." };
-  }
-
-  await notifyStaff("reception", {
-    type:       "📋 НОВОЕ БРОНИРОВАНИЕ (бот)",
-    code:       result.code,
-    guest:      guest_name,
-    checkIn:    check_in,
-    checkOut:   check_out,
-    platform:   guest.platform,
-  });
-
-  return {
-    success:     true,
-    code:        result.code,
-    status:      result.status,
-    message:     `✅ Бронирование создано! Код: ${result.code}. Сохраните его — понадобится при заезде.`,
-  };
 }
 
 // ════════ 2. ROOM SERVICE ════════════════════════════════════════
@@ -451,32 +384,19 @@ async function toolLateCheckout(room: string, input: any) {
   };
 }
 
-// ════════ 14. ПРОДЛЕНИЕ НОМЕРА ════════════════════════════════════
+// ════════ 14. ПРОДЛЕНИЕ НОМЕРА — только запрос ресепшну ══════════
 async function toolRoomExtension(room: string, input: any) {
   const id = `RE-${Date.now()}`;
-
-  // Try to update PMS directly when new checkout date is known
-  let pmsUpdated = false;
-  if (input.new_checkout_date) {
-    const reservation = await pmsClient.getActiveReservationByRoom(room);
-    if (reservation?.id) {
-      pmsUpdated = await pmsClient.extendStay(reservation.id, input.new_checkout_date);
-      if (pmsUpdated) {
-        logger.info("Stay extended in PMS", { room, reservationId: reservation.id, newCheckOut: input.new_checkout_date });
-      }
-    }
-  }
 
   await notifyStaff("room_extension", {
     room,
     requestId:         id,
     extra_nights:      input.extra_nights,
     new_checkout_date: input.new_checkout_date || "уточнить",
-    pms_updated:       pmsUpdated,
   });
 
   await safePrisma(() => prisma.eventLog.create({
-    data: { eventType: "ROOM_EXTENSION", roomNumber: room, data: { ...input, pms_updated: pmsUpdated } }
+    data: { eventType: "ROOM_EXTENSION", roomNumber: room, data: input }
   }));
 
   return {
@@ -485,11 +405,8 @@ async function toolRoomExtension(room: string, input: any) {
     room,
     extra_nights:      input.extra_nights,
     new_checkout_date: input.new_checkout_date,
-    pms_updated:       pmsUpdated,
-    status:            pmsUpdated ? "Продление подтверждено в системе ✅" : "Запрос на продление отправлен",
-    note:              pmsUpdated
-      ? "Дата выезда обновлена в системе. Ресепшн пришлёт счёт за дополнительные ночи ✅"
-      : "Администратор свяжется с вами в течение 5–10 минут для подтверждения и расчёта стоимости ✅",
+    status:            "Запрос передан ресепшну",
+    note:              "Администратор свяжется с вами в течение 5–10 минут для подтверждения и расчёта стоимости ✅",
   };
 }
 
