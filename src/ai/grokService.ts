@@ -20,46 +20,52 @@ const grok = new OpenAI({
 const MODEL_PRIMARY  = process.env.GROQ_MODEL_PRIMARY  || process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 const MODEL_FALLBACK = process.env.GROQ_MODEL_FALLBACK || "llama-3.1-8b-instant";
 
-// Retry with fallback model on 429/413
+// Жёсткий таймаут на весь chat() — переопределяется через env CHAT_TIMEOUT_MS
+const CHAT_TIMEOUT_MS = parseInt(process.env.CHAT_TIMEOUT_MS ?? "") || 14_000;
+
+// Один вызов на модель, без ожидания.
+// 413 → trim context + retry той же моделью, затем fallback-модель.
+// 429 → немедленно переключаемся на fallback-модель, без sleep.
 async function groqCreate(
   params: Omit<OpenAI.Chat.ChatCompletionCreateParamsNonStreaming, "model"> & { model?: string }
 ): Promise<OpenAI.Chat.ChatCompletion> {
   const models = [params.model || MODEL_PRIMARY, MODEL_FALLBACK];
+  let msgs = params.messages;
 
   for (let mi = 0; mi < models.length; mi++) {
     const model = models[mi];
-    let msgs = params.messages;
-
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        return await grok.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
-      } catch (err: any) {
-        // 413: context too large — compact system + keep last user + trailing tool pair
-        if (err.status === 413) {
-          const compactSys: OpenAI.Chat.ChatCompletionMessageParam = {
-            role: "system",
-            content: "You are Ammar AI, hotel concierge. Be brief. Answer in the guest's language.",
-          };
-          const nonSys = msgs.filter(m => m.role !== "system");
-          const lastUserIdx = [...nonSys].reverse().findIndex(m => m.role === "user");
-          const relevant = lastUserIdx >= 0 ? nonSys.slice(nonSys.length - 1 - lastUserIdx) : nonSys.slice(-3);
-          msgs = [compactSys, ...relevant];
-          logger.warn("Groq 413 — trimmed context", { model, kept: msgs.length });
-          if (attempt < 2) continue;
-          // Still fails after trim → treat as rate-limit
-          throw Object.assign(err, { status: 429 });
-        }
-        if (err.status !== 429 && err.status !== 413) throw err;
-        const isLastTry = mi === models.length - 1 && attempt === 2;
-        if (isLastTry) throw err;
-        const wait = attempt === 1 && mi < models.length - 1 ? 0 : 10_000;
-        if (wait) {
-          logger.warn(`Groq 429 — waiting ${wait / 1000}s`, { model, attempt });
-          await new Promise(r => setTimeout(r, wait));
-        } else {
-          logger.warn(`Groq 429 on ${model} — switching to ${MODEL_FALLBACK}`);
+    try {
+      return await grok.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
+    } catch (err: any) {
+      // 413: trim context, retry той же моделью один раз, затем следующая модель
+      if (err.status === 413) {
+        const compactSys: OpenAI.Chat.ChatCompletionMessageParam = {
+          role: "system",
+          content: "You are Ammar AI, hotel concierge. Be brief. Answer in the guest's language.",
+        };
+        const nonSys = msgs.filter(m => m.role !== "system");
+        const lastUserIdx = [...nonSys].reverse().findIndex(m => m.role === "user");
+        const relevant = lastUserIdx >= 0 ? nonSys.slice(nonSys.length - 1 - lastUserIdx) : nonSys.slice(-3);
+        msgs = [compactSys, ...relevant];
+        logger.warn("Groq 413 — trimmed context", { model, kept: msgs.length });
+        try {
+          return await grok.chat.completions.create({ ...params, messages: msgs, model }) as OpenAI.Chat.ChatCompletion;
+        } catch (retryErr: any) {
+          if (mi < models.length - 1) {
+            logger.warn(`Groq 413+retry failed — switching to ${models[mi + 1]}`);
+            continue;
+          }
+          throw Object.assign(retryErr, { status: 429 });
         }
       }
+      // Не-ретрайабельная ошибка — пробрасываем
+      if (err.status !== 429) throw err;
+      // 429: немедленно на следующую модель, без ожидания
+      if (mi < models.length - 1) {
+        logger.warn(`Groq 429 on ${model} → switching to ${models[mi + 1]} (no wait)`);
+        continue;
+      }
+      throw err; // Обе модели исчерпаны
     }
   }
   throw new Error("Groq: all retry attempts exhausted");
@@ -83,14 +89,13 @@ export async function chat(
 
   const systemFull = await buildSystem(guest);
 
-  // Формируем историю для Grok
+  // Формируем историю для Groq
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: systemFull },
     ...history.map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
     { role: "user", content: userMessage },
   ];
 
-  let finalReply = "";
   let iterations = 0;
 
   const ACTION_TOOLS = new Set([
@@ -100,108 +105,124 @@ export async function chat(
     "order_service",
   ]);
 
-  // ── АГЕНТНЫЙ ЦИКЛ — wrapped so no exception ever escapes to the caller ──
-  try {
-  while (iterations < 4) {
-    iterations++;
+  // ── АГЕНТНЫЙ ЦИКЛ (макс 3 итерации) ─────────────────────────────────────
+  const runAgent = async (): Promise<string> => {
+    let reply = "";
 
-    let response;
     try {
-      response = await groqCreate({
-        messages,
-        tools:       TOOLS,
-        tool_choice: "auto",
-        max_tokens:  700,
-        temperature: 0.6,
-      });
-    } catch (apiErr: any) {
-      if (apiErr.status === 429) {
-        finalReply = rateLimitMsg(guest.language);
-        break;
-      }
-      if (apiErr.status === 400) {
-        // Tool call format error or decommissioned model — retry without tools
-        logger.warn("Groq 400 — retrying without tools", { err: apiErr.message });
+      while (iterations < 3) {
+        iterations++;
+
+        let response;
         try {
-          const retry = await groqCreate({ messages, max_tokens: 512, temperature: 0.5 });
-          finalReply = retry.choices[0].message.content || fallback(guest.language);
-        } catch {
-          finalReply = fallback(guest.language);
+          response = await groqCreate({
+            messages,
+            tools:       TOOLS,
+            tool_choice: "auto",
+            max_tokens:  700,
+            temperature: 0.6,
+          });
+        } catch (apiErr: any) {
+          if (apiErr.status === 429) {
+            reply = rateLimitMsg(guest.language);
+            break;
+          }
+          if (apiErr.status === 400) {
+            // Tool call format error — retry without tools
+            logger.warn("Groq 400 — retrying without tools", { err: apiErr.message });
+            try {
+              const retry = await groqCreate({ messages, max_tokens: 512, temperature: 0.5 });
+              reply = retry.choices[0].message.content || fallback(guest.language);
+            } catch {
+              reply = fallback(guest.language);
+            }
+            break;
+          }
+          throw apiErr;
         }
-        break;
-      }
-      throw apiErr;
-    }
 
-    const choice = response.choices[0];
+        const choice = response.choices[0];
 
-    logger.debug("Groq response", {
-      finish_reason: choice.finish_reason,
-      room:          guest.roomNumber,
-      iteration:     iterations,
-    });
-
-    // Модель дала текстовый ответ — готово
-    if (choice.finish_reason === "stop" || !choice.message.tool_calls?.length) {
-      finalReply = choice.message.content || fallback(guest.language);
-      break;
-    }
-
-    // Модель вызывает инструменты
-    if (choice.finish_reason === "tool_calls" && choice.message.tool_calls?.length) {
-      messages.push(choice.message as OpenAI.Chat.ChatCompletionMessageParam);
-
-      let calledAction = false;
-      for (const toolCall of choice.message.tool_calls) {
-        const toolName  = toolCall.function.name;
-        const toolInput = JSON.parse(toolCall.function.arguments);
-
-        logger.info(`⚙️  Tool: ${toolName}`, { room: guest.roomNumber, input: toolInput });
-
-        const result = await executeToolCall(toolName, toolInput, guest);
-
-        messages.push({
-          role:         "tool",
-          tool_call_id: toolCall.id,
-          content:      JSON.stringify(result),
+        logger.debug("Groq response", {
+          finish_reason: choice.finish_reason,
+          room:          guest.roomNumber,
+          iteration:     iterations,
         });
 
-        if (ACTION_TOOLS.has(toolName)) calledAction = true;
-      }
-
-      // После action-инструмента — финальный тёплый ответ без tools
-      if (calledAction) {
-        try {
-          const final = await groqCreate({ messages, max_tokens: 350, temperature: 0.7 });
-          finalReply = final.choices[0].message.content || fallback(guest.language);
-        } catch (err: any) {
-          finalReply = err.status === 429 ? rateLimitMsg(guest.language) : fallback(guest.language);
+        // Модель дала текстовый ответ — готово
+        if (choice.finish_reason === "stop" || !choice.message.tool_calls?.length) {
+          reply = choice.message.content || fallback(guest.language);
+          break;
         }
+
+        // Модель вызывает инструменты
+        if (choice.finish_reason === "tool_calls" && choice.message.tool_calls?.length) {
+          messages.push(choice.message as OpenAI.Chat.ChatCompletionMessageParam);
+
+          let calledAction = false;
+          for (const toolCall of choice.message.tool_calls) {
+            const toolName  = toolCall.function.name;
+            const toolInput = JSON.parse(toolCall.function.arguments);
+
+            logger.info(`⚙️  Tool: ${toolName}`, { room: guest.roomNumber, input: toolInput });
+
+            const result = await executeToolCall(toolName, toolInput, guest);
+
+            messages.push({
+              role:         "tool",
+              tool_call_id: toolCall.id,
+              content:      JSON.stringify(result),
+            });
+
+            if (ACTION_TOOLS.has(toolName)) calledAction = true;
+          }
+
+          // После action-инструмента — финальный тёплый ответ без tools
+          if (calledAction) {
+            try {
+              const final = await groqCreate({ messages, max_tokens: 350, temperature: 0.7 });
+              reply = final.choices[0].message.content || fallback(guest.language);
+            } catch (err: any) {
+              reply = err.status === 429 ? rateLimitMsg(guest.language) : fallback(guest.language);
+            }
+            break;
+          }
+
+          continue;
+        }
+
+        reply = choice.message.content || fallback(guest.language);
         break;
       }
 
-      continue;
+      // Лимит итераций исчерпан — принудительный финал
+      if (!reply) {
+        try {
+          const forced = await groqCreate({ messages, max_tokens: 350, temperature: 0.7 });
+          reply = forced.choices[0].message.content || fallback(guest.language);
+        } catch (err: any) {
+          reply = err.status === 429 ? rateLimitMsg(guest.language) : fallback(guest.language);
+        }
+      }
+
+    } catch (loopErr: any) {
+      logger.error("Agent loop uncaught error", { err: loopErr.message, status: loopErr.status });
+      reply = loopErr.status === 429 ? rateLimitMsg(guest.language) : fallback(guest.language);
     }
 
-    finalReply = choice.message.content || fallback(guest.language);
-    break;
-  }
+    return reply || fallback(guest.language);
+  };
 
-  // Лимит итераций исчерпан без текстового ответа — принудительно запрашиваем финал
-  if (!finalReply) {
-    try {
-      const forced = await groqCreate({ messages, max_tokens: 350, temperature: 0.7 });
-      finalReply = forced.choices[0].message.content || fallback(guest.language);
-    } catch (err: any) {
-      finalReply = err.status === 429 ? rateLimitMsg(guest.language) : fallback(guest.language);
-    }
-  }
-
-  } catch (loopErr: any) {
-    // Safety net: any uncaught error from the agent loop → friendly message
-    logger.error("Agent loop uncaught error", { err: loopErr.message, status: loopErr.status });
-    finalReply = loopErr.status === 429 ? rateLimitMsg(guest.language) : fallback(guest.language);
-  }
+  // ── ЖЁСТКИЙ ТАЙМАУТ — бот НЕ висит дольше CHAT_TIMEOUT_MS ───────────────
+  const finalReply = await Promise.race([
+    runAgent(),
+    new Promise<string>(resolve =>
+      setTimeout(() => {
+        logger.warn("Chat timeout exceeded", { room: guest.roomNumber, ms: CHAT_TIMEOUT_MS });
+        resolve(timeoutMsg(guest.language));
+      }, CHAT_TIMEOUT_MS)
+    ),
+  ]);
 
   const now = new Date().toISOString();
 
@@ -302,6 +323,16 @@ function rateLimitMsg(lang: string): string {
     russian: "⏳ Обрабатываю ваш запрос, одну секунду...\nЕсли ответ задерживается — позвоните: ☎️ 0",
     english: "⏳ Processing your request, one moment...\nIf the response is delayed — please call: ☎️ 0",
     chinese: "⏳ 正在处理您的请求，请稍候...\n如有延迟，请致电：☎️ 0",
+  };
+  return r[lang] ?? r.russian;
+}
+
+function timeoutMsg(lang: string): string {
+  const r: Record<string, string> = {
+    tajik:   "⏳ Дархост каме дер шуд. Лутфан дубора нависед ё ба ресепшн занг занед: ☎️ 0",
+    russian: "⏳ Запрос занял слишком много времени. Напишите ещё раз или позвоните: ☎️ 0",
+    english: "⏳ Request took too long. Please send your message again or call reception: ☎️ 0",
+    chinese: "⏳ 请求超时，请重新发送消息或拨打前台：☎️ 0",
   };
   return r[lang] ?? r.russian;
 }

@@ -67,7 +67,7 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
     }}}},
 
   { type:"function", function:{ name:"create_upsell",
-    description:"Предложение гостю: ужин в ресторане, завтрак в номер, экскурсия. Вызывай ТОЛЬКО если гость явно доволен (говорит 'спасибо', 'отлично', 'всё хорошо'). НЕ навязывай при нейтральных или негативных сообщениях.",
+    description:"Апселл гостю. Вызывай ТОЛЬКО если гость явно доволен ('спасибо', 'отлично', 'всё хорошо'). offer_type СТРОГО одно из трёх: 'restaurant' (ужин в ресторане), 'breakfast' (завтрак в номер), 'excursion' (экскурсия). Любое другое значение — ошибка. НЕ навязывай при нейтральных или негативных сообщениях.",
     parameters:{ type:"object", required:["room_number","offer_type"],
     properties:{
       room_number: { type:"string" },
