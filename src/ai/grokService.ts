@@ -146,7 +146,12 @@ export async function chat(
             }
             break;
           }
-          throw apiErr;
+          // 5xx / network / other — soft reply, never throw to loopErr
+          logger.warn(`AI ${apiErr.status ?? "network"} error — soft reply`, {
+            err: apiErr.message, room: guest.roomNumber,
+          });
+          reply = softFallback(guest.language);
+          break;
         }
 
         const choice = response.choices[0];
@@ -164,8 +169,15 @@ export async function chat(
 
           let calledAction = false;
           for (const toolCall of choice.message.tool_calls) {
-            const toolName  = toolCall.function.name;
-            const toolInput = JSON.parse(toolCall.function.arguments);
+            const toolName = toolCall.function.name;
+            let toolInput: Record<string, any> = {};
+            try {
+              toolInput = JSON.parse(toolCall.function.arguments);
+            } catch {
+              logger.warn(`Tool ${toolName}: malformed JSON args — using {}`, {
+                raw: toolCall.function.arguments?.slice(0, 120),
+              });
+            }
 
             logger.info(`⚙️  Tool: ${toolName}`, { room: guest.roomNumber, input: toolInput });
 
@@ -313,10 +325,21 @@ Wi-Fi:         ${k.wifiAvailable ? `${y} — ${t(k.wifiInfo)}` : n}
 
 function fallback(lang: string): string {
   const r: Record<string, string> = {
-    tajik:   "Бахшед, хато рух дод. Ба ресепшн занг занед: ☎️ 0",
-    russian: "Извините, произошла ошибка. Позвоните на ресепшн: ☎️ 0",
-    english: "Sorry, an error occurred. Please call reception: ☎️ 0",
-    chinese: "抱歉，发生错误。请拨打前台电话：☎️ 0",
+    tajik:   "Бахшед, хато рух дод. Ба ресепшн занг занед: ☎️ 1",
+    russian: "Извините, произошла ошибка. Позвоните на ресепшн: ☎️ 1",
+    english: "Sorry, an error occurred. Please call reception: ☎️ 1",
+    chinese: "抱歉，发生错误。请拨打前台电话：☎️ 1",
+  };
+  return r[lang] ?? r.russian;
+}
+
+// Мягкий ответ при 5xx / network — не пугает гостя словом «ошибка»
+function softFallback(lang: string): string {
+  const r: Record<string, string> = {
+    tajik:   "Лутфан як лаҳза сабр кунед — ба ресепшн мурофиат кунед: ☎️ 1",
+    russian: "Секунду, уточню у ресепшна. Позвоните: ☎️ 1",
+    english: "One moment — let me check with reception. Please call: ☎️ 1",
+    chinese: "请稍候，我将向前台确认。如需帮助请拨打：☎️ 1",
   };
   return r[lang] ?? r.russian;
 }
