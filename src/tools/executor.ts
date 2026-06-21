@@ -126,7 +126,7 @@ async function toolHousekeeping(room: string, input: any, guest: GuestCtx) {
 async function toolTaxi(room: string, input: any) {
   const id = `TX-${Date.now()}`;
   const prices: Record<string, string> = {
-    standard: "25–40 сом", comfort: "50–70 сом", airport_transfer: "80–120 сом",
+    standard: "25–40 сом", comfort: "50–70 сом",
   };
 
   await notifyStaff("reception", {

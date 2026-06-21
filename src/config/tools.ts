@@ -31,14 +31,14 @@ export const TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
     }}}},
 
   { type:"function", function:{ name:"arrange_taxi",
-    description:"Заказ такси или трансфера в аэропорт. Вызывай когда гость упоминает такси, трансфер, аэропорт, поездку.",
+    description:"Заказ городского такси (только поездки ПО ГОРОДУ). НЕ использовать для трансфера в аэропорт — это отдельная услуга отеля.",
     parameters:{ type:"object", required:["room_number","destination","pickup_time"],
     properties:{
       room_number:  { type:"string" },
       destination:  { type:"string" },
       pickup_time:  { type:"string" },
       passengers:   { type:"number" },
-      taxi_type:    { type:"string", enum:["standard","comfort","airport_transfer"] },
+      taxi_type:    { type:"string", enum:["standard","comfort"] },
     }}}},
 
   { type:"function", function:{ name:"get_city_info",
